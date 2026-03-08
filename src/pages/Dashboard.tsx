@@ -30,6 +30,7 @@ const Dashboard = () => {
   const { data: stats, isLoading: statsLoading } = useDashboardStats();
   const { data: leads, isLoading: leadsLoading } = useLeads();
   const { data: agentStats } = useAgentStats();
+  const { data: bookingStats } = useBookingStats();
   const { data: reminders } = useAllReminders();
   const completeFollowUp = useCompleteFollowUp();
   const qc = useQueryClient();
