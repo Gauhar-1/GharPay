@@ -4,57 +4,66 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
-import { Mail, Lock, User, Eye, EyeOff, ShieldCheck, Zap, Fingerprint, Terminal, Database } from 'lucide-react';
+import { Mail, Lock, User, Eye, EyeOff, Home, ShieldCheck, Zap } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 
-const terminalTransition: any = { type: 'tween', duration: 0.4, ease: [0.22, 1, 0.36, 1] };
+const springTransition: any = { type: 'spring', bounce: 0, duration: 0.6, ease: [0.32, 0.72, 0, 1] };
 
 const Auth = () => {
   const [mode, setMode] = useState<'login' | 'signup' | 'forgot'>('login');
   
-  // PURGED: Hardcoded demo credentials are removed for production security.
+  // LOGIC FIX 1: Removed hardcoded demo credentials for production security
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
   
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  
   const navigate = useNavigate();
   const { user } = useAuth();
 
-  // INTELLIGENT ROUTING: Automatically route based on clearance level
+  // LOGIC FIX 2: Intelligent role-based redirection if already logged in
   useEffect(() => {
     if (user) {
       const isAdmin = user.email === 'admin@gharpayy.com' || user.user_metadata?.role === 'admin';
-      toast.success('Clearance accepted. Initializing system...');
-      navigate(isAdmin ? '/dashboard' : '/owner-portal');
+      // Automatically route users based on their role
+      navigate(isAdmin ? '/dashboard' : '/');
     }
   }, [user, navigate]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    // LOGIC FIX 3: Prevent empty submissions
     if (!email || !password) {
-      toast.error('Credentials required.');
+      toast.error('Please enter both email and password');
       return;
     }
+
     setLoading(true);
     const { error } = await supabase.auth.signInWithPassword({ email, password });
+    
     if (error) {
-      toast.error('Access Denied: ' + error.message);
-      setLoading(false);
+      toast.error(error.message);
+    } else {
+      toast.success('Successfully signed in!');
+      // Navigation is handled automatically by the useEffect above
     }
-    // Note: Success routing is handled automatically by the useEffect watching `user`
+    setLoading(false);
   };
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!fullName.trim()) { 
-      toast.error('Operative designation (Name) is required.'); 
+      toast.error('Your full name is required'); 
       return; 
     }
+    if (!email || !password) { 
+      toast.error('Email and password are required'); 
+      return; 
+    }
+
     setLoading(true);
     const { error } = await supabase.auth.signUp({
       email,
@@ -66,27 +75,28 @@ const Auth = () => {
     });
     
     if (error) {
-      toast.error('Registration failed: ' + error.message);
+      toast.error(error.message);
     } else {
-      toast.success('Clearance link transmitted to your inbox.');
-      setMode('login');
+      toast.success('Verification link sent to your inbox');
+      setMode('login'); // Switch to login mode after successful signup
     }
     setLoading(false);
   };
 
   const handleForgot = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email) {
-      toast.error('Target email address required.');
-      return;
+    if (!email) { 
+      toast.error('Please enter your email address'); 
+      return; 
     }
+
     setLoading(true);
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: `${window.location.origin}/reset-password`,
     });
     
-    if (error) toast.error('Transmission failed: ' + error.message);
-    else toast.success('Recovery protocol initiated. Check your inbox.');
+    if (error) toast.error(error.message);
+    else toast.success('Password reset instructions sent to your email');
     
     setLoading(false);
   };
@@ -100,37 +110,48 @@ const Auth = () => {
         queryParams: { prompt: 'select_account' } 
       },
     });
+    
     if (error) {
-      toast.error('OAuth failed: ' + error.message);
+      toast.error(error.message);
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-[#0A0A0C] flex overflow-hidden selection:bg-[#D4AF37]/30 selection:text-white font-sans">
-      
-      {/* LEFT PANEL: Tactical Branding */}
-      <div className="hidden lg:flex w-[55%] relative overflow-hidden flex-col justify-between p-16 bg-[#0A0A0C] border-r border-white/10">
-        {/* Subtle Microfilm Texture */}
-        <div className="absolute inset-0 pointer-events-none opacity-[0.04] z-0 bg-[url('https://www.transparenttextures.com/patterns/dark-matter.png')]" />
+    <div className="min-h-screen bg-background flex overflow-hidden selection:bg-accent/30">
+      {/* Left Panel: Customer Branding */}
+      <div className="hidden lg:flex w-[55%] relative overflow-hidden flex-col justify-between p-16 bg-[#09090b]">
         
-        {/* Ambient Glow */}
-        <div className="absolute top-[-10%] left-[-10%] w-[60%] h-[60%] bg-[#D4AF37]/5 blur-[140px] rounded-full animate-pulse" />
+        {/* --- PREMIUM BACKGROUND IMAGE & OVERLAYS --- */}
+        <div className="absolute inset-0 z-0">
+          <img 
+            src="https://images.unsplash.com/photo-1600607687959-ce8a6c25118c?q=80&w=2000&auto=format&fit=crop" 
+            alt="Premium Interior" 
+            className="w-full h-full object-cover opacity-[0.45]"
+          />
+          {/* Gradients to ensure text readability */}
+          <div className="absolute inset-0 bg-gradient-to-t from-[#09090b] via-[#09090b]/80 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-r from-[#09090b]/90 to-transparent" />
+        </div>
+
+        {/* Animated glowing orbs */}
+        <div className="absolute top-[-10%] left-[-10%] w-[60%] h-[60%] bg-accent/20 blur-[140px] rounded-full animate-pulse z-0 mix-blend-screen" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-info/10 blur-[140px] rounded-full z-0 mix-blend-screen" />
         
         <div className="relative z-10">
           <motion.div 
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
-            transition={terminalTransition}
-            className="flex items-center gap-4 cursor-pointer"
+            transition={springTransition}
+            className="flex items-center gap-4 cursor-pointer w-fit"
             onClick={() => navigate('/')}
           >
-            <div className="w-12 h-12 border border-[#D4AF37] bg-[#D4AF37]/5 flex items-center justify-center">
-              <span className="text-[#D4AF37] font-serif font-black text-2xl italic">G</span>
+            <div className="w-12 h-12 rounded-2xl bg-accent flex items-center justify-center shadow-2xl shadow-accent/20 backdrop-blur-md border border-accent/20">
+              <span className="text-accent-foreground font-black text-xl">G</span>
             </div>
             <div>
-              <h1 className="text-2xl font-serif font-bold text-white tracking-tighter leading-none">Gharpayy</h1>
-              <p className="text-[9px] font-mono font-bold uppercase tracking-[0.3em] text-[#D4AF37] mt-1.5">Intelligence OS</p>
+              <h1 className="text-2xl font-bold text-white tracking-tighter leading-none">Gharpayy</h1>
+              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/60 mt-1">Premium PG & Co-living</p>
             </div>
           </motion.div>
         </div>
@@ -139,194 +160,173 @@ const Auth = () => {
           <motion.div
             initial="hidden"
             animate="visible"
-            variants={{ visible: { transition: { staggerChildren: 0.1 } } }}
+            variants={{
+              visible: { transition: { staggerChildren: 0.15 } }
+            }}
           >
             <motion.h2 
-              variants={{ hidden: { opacity: 0, y: 10 }, visible: { opacity: 1, y: 0 } }}
-              transition={terminalTransition}
-              className="text-5xl xl:text-6xl font-serif italic text-white leading-[1.05] tracking-tight mb-12"
+              variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}
+              transition={springTransition}
+              className="text-5xl xl:text-6xl font-black text-white leading-[0.95] tracking-tight mb-8 drop-shadow-lg"
             >
-              Establish Operational Control.
+              Find your perfect PG. <br />
+              <span className="text-accent">Zero brokerage.</span>
             </motion.h2>
 
             <motion.div 
-              variants={{ hidden: { opacity: 0, y: 10 }, visible: { opacity: 1, y: 0 } }}
-              transition={terminalTransition}
+              variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}
+              transition={springTransition}
               className="grid grid-cols-2 gap-4"
             >
-              <div className="p-8 bg-[#121215] border border-white/10 hover:border-[#D4AF37]/50 transition-colors">
-                <div className="w-10 h-10 border border-[#D4AF37]/30 bg-[#0A0A0C] flex items-center justify-center text-[#D4AF37] mb-6">
-                  <Database size={18} />
+              <div className="p-6 rounded-[2rem] bg-[#09090b]/40 border border-white/10 backdrop-blur-xl shadow-2xl">
+                <div className="w-10 h-10 rounded-xl bg-accent/20 flex items-center justify-center text-accent mb-4 border border-accent/10">
+                  <Home size={20} />
                 </div>
-                <p className="text-white font-serif text-xl leading-tight mb-2">Encrypted Intel</p>
-                <p className="text-white/40 font-mono text-[10px] uppercase tracking-widest leading-relaxed">
-                  Proprietary algorithms identifying high-yield target acquisitions.
-                </p>
+                <p className="text-white font-bold text-lg leading-tight">Verified <br />Properties</p>
+                <p className="text-white/60 text-xs mt-2 leading-relaxed">Browse hundreds of premium spaces tailored for your comfort.</p>
               </div>
 
-              <div className="p-8 bg-[#121215] border border-white/10 hover:border-[#D4AF37]/50 transition-colors">
-                <div className="w-10 h-10 border border-[#A62639]/30 bg-[#0A0A0C] flex items-center justify-center text-[#A62639] mb-6">
-                  <ShieldCheck size={18} />
+              <div className="p-6 rounded-[2rem] bg-[#09090b]/40 border border-white/10 backdrop-blur-xl shadow-2xl">
+                <div className="w-10 h-10 rounded-xl bg-info/20 flex items-center justify-center text-info mb-4 border border-info/10">
+                  <ShieldCheck size={20} />
                 </div>
-                <p className="text-white font-serif text-xl leading-tight mb-2">Absolute Security</p>
-                <p className="text-white/40 font-mono text-[10px] uppercase tracking-widest leading-relaxed">
-                  Automated protocols ensuring zero data leakage in the pipeline.
-                </p>
+                <p className="text-white font-bold text-lg leading-tight">100% <br />Secure</p>
+                <p className="text-white/60 text-xs mt-2 leading-relaxed">Transparent pricing, zero hidden fees, and instant booking.</p>
               </div>
             </motion.div>
           </motion.div>
         </div>
 
-        <div className="relative z-10 flex items-center justify-between border-t border-white/10 pt-8">
-          <div className="flex items-center gap-3">
-            <div className="w-2 h-2 bg-emerald-500 animate-pulse" />
-            <span className="text-[10px] font-mono uppercase tracking-[0.2em] text-white/50">System Online • Secure Connection</span>
+        <div className="relative z-10 flex items-center justify-between border-t border-white/10 pt-8 mt-8">
+          <div className="flex -space-x-3">
+             {[1,2,3,4].map(i => (
+               <div key={i} className="w-8 h-8 rounded-full border-2 border-[#09090b] bg-white/10 flex items-center justify-center overflow-hidden shadow-lg">
+                 <img src={`https://i.pravatar.cc/100?img=${i+10}`} alt="User" />
+               </div>
+             ))}
+             <div className="w-8 h-8 rounded-full border-2 border-[#09090b] bg-accent flex items-center justify-center text-[10px] font-bold text-accent-foreground shadow-lg">
+               +5k
+             </div>
           </div>
+          <p className="text-[10px] font-bold uppercase tracking-widest text-white/50">Trusted by thousands of happy residents</p>
         </div>
       </div>
 
-      {/* RIGHT PANEL: Authentication Terminal */}
-      <div className="flex-1 relative flex items-center justify-center p-8 bg-[#0A0A0C]">
+      {/* Right Panel: Auth Gateway */}
+      <div className="flex-1 relative flex items-center justify-center p-8 bg-background">
         
+        {/* --- PREMIUM DOT PATTERN BACKGROUND --- */}
+        <div className="absolute inset-0 bg-[radial-gradient(theme(colors.foreground)_1px,transparent_1px)] [background-size:24px_24px] opacity-[0.03] pointer-events-none" />
+        
+        {/* Floating gradient for mobile */}
+        <div className="lg:hidden absolute top-0 left-0 w-full h-full bg-accent/5 blur-[120px] pointer-events-none" />
+
         <motion.div
-          className="w-full max-w-[400px] z-10"
-          initial={{ opacity: 0, y: 10 }}
+          className="w-full max-w-[400px] z-10 relative bg-background/50 backdrop-blur-sm p-4 sm:p-0 rounded-3xl sm:bg-transparent sm:backdrop-blur-none"
+          initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ ...terminalTransition, delay: 0.1 }}
+          transition={{ ...springTransition, delay: 0.1 }}
         >
-          {/* Mobile Header */}
-          <div className="lg:hidden flex items-center gap-3 mb-12 border-b border-white/10 pb-6">
-            <div className="w-10 h-10 border border-[#D4AF37] bg-[#D4AF37]/5 flex items-center justify-center">
-              <span className="text-[#D4AF37] font-serif font-black text-lg italic">G</span>
+          <div className="lg:hidden flex items-center gap-3 mb-10">
+            <div className="w-10 h-10 rounded-xl bg-accent flex items-center justify-center shadow-lg shadow-accent/20">
+              <span className="text-accent-foreground font-black text-lg">G</span>
             </div>
-            <div>
-              <h1 className="text-lg font-serif font-bold text-white tracking-tight leading-none">Gharpayy</h1>
-              <p className="text-[8px] font-mono uppercase tracking-[0.3em] text-[#D4AF37] mt-1">Intelligence OS</p>
-            </div>
+            <h1 className="text-xl font-bold tracking-tighter">Gharpayy</h1>
           </div>
 
           <div className="mb-10">
-            <h2 className="text-3xl font-serif text-white tracking-tight mb-2">
-              {mode === 'login' ? 'System Authorization.' : mode === 'signup' ? 'Initiate Registration.' : 'Clearance Recovery.'}
+            <h2 className="text-3xl font-black tracking-tight text-foreground">
+              {mode === 'login' ? 'Welcome back' : mode === 'signup' ? 'Create Account' : 'Reset Password'}
             </h2>
-            <p className="text-[10px] font-mono tracking-widest uppercase text-white/50">
-              {mode === 'login' ? 'Enter credentials to access the network' : mode === 'signup' ? 'Establish your operative identity' : 'Verify identity to bypass lockout'}
+            <p className="text-sm font-medium text-muted-foreground mt-2">
+              {mode === 'login' ? 'Sign in to access your bookings and saved properties' : mode === 'signup' ? 'Join to find and book your perfect PG instantly' : 'Enter your email to receive a reset link'}
             </p>
           </div>
 
           <AnimatePresence mode="wait">
             <motion.div
               key={mode}
-              initial={{ opacity: 0, x: 5 }}
+              initial={{ opacity: 0, x: 10 }}
               animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -5 }}
+              exit={{ opacity: 0, x: -10 }}
               transition={{ duration: 0.2 }}
             >
-              {/* Google OAuth */}
               {mode !== 'forgot' && (
                 <div className="space-y-4 mb-8">
                   <Button 
                     type="button"
                     variant="outline" 
-                    className="w-full h-12 rounded-none gap-3 bg-transparent border-white/20 text-white font-mono text-[10px] tracking-[0.2em] uppercase hover:bg-white/5 hover:text-white transition-all" 
+                    className="w-full h-14 rounded-2xl gap-3 border-border/50 bg-card hover:bg-secondary/50 font-bold transition-all active:scale-[0.98] shadow-sm" 
                     onClick={handleGoogle} 
                     disabled={loading}
                   >
-                    <svg className="w-4 h-4" viewBox="0 0 24 24">
+                    <svg className="w-5 h-5" viewBox="0 0 24 24">
                       <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4" />
                       <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
                       <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" />
                       <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
                     </svg>
-                    Authorize via Google
+                    Continue with Google
                   </Button>
                   
                   <div className="relative">
-                    <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-white/10" /></div>
-                    <div className="relative flex justify-center text-[9px] font-mono font-bold uppercase tracking-[0.3em]">
-                      <span className="bg-[#0A0A0C] px-4 text-white/30">OR STANDARD PROTOCOL</span>
+                    <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-border/50" /></div>
+                    <div className="relative flex justify-center text-[10px] font-bold uppercase tracking-widest">
+                      <span className="bg-background px-4 text-muted-foreground/60">Or continue with email</span>
                     </div>
                   </div>
                 </div>
               )}
 
-              <form onSubmit={mode === 'login' ? handleLogin : mode === 'signup' ? handleSignup : handleForgot} className="space-y-6">
-                
-                {/* Full Name Field (Signup Only) */}
+              <form onSubmit={mode === 'login' ? handleLogin : mode === 'signup' ? handleSignup : handleForgot} className="space-y-5">
                 {mode === 'signup' && (
                   <div className="space-y-2">
-                    <Label className="text-[9px] font-mono tracking-[0.2em] uppercase text-white/50">Designation (Legal Name)</Label>
+                    <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1">Full Name</Label>
                     <div className="relative group">
-                      <Fingerprint size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-white/30 transition-colors group-focus-within:text-[#D4AF37]" />
-                      <Input 
-                        className="pl-12 h-12 rounded-none bg-[#121215] border-white/10 text-white font-mono text-sm tracking-widest focus:border-[#D4AF37] transition-all" 
-                        placeholder="ENTER NAME..." 
-                        value={fullName} 
-                        onChange={e => setFullName(e.target.value)} 
-                      />
+                      <User size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground transition-colors group-focus-within:text-accent" />
+                      <Input className="pl-12 h-14 rounded-2xl bg-card border-border/50 focus:bg-background transition-all shadow-sm" placeholder="Your full name" value={fullName} onChange={e => setFullName(e.target.value)} />
                     </div>
                   </div>
                 )}
                 
-                {/* Email Field */}
                 <div className="space-y-2">
-                  <Label className="text-[9px] font-mono tracking-[0.2em] uppercase text-white/50">Comms Link (Email)</Label>
+                  <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1">Email Address</Label>
                   <div className="relative group">
-                    <Mail size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-white/30 transition-colors group-focus-within:text-[#D4AF37]" />
-                    <Input 
-                      className="pl-12 h-12 rounded-none bg-[#121215] border-white/10 text-white font-mono text-sm tracking-widest focus:border-[#D4AF37] transition-all" 
-                      type="email" 
-                      placeholder="OPERATIVE@DOMAIN.COM" 
-                      value={email} 
-                      onChange={e => setEmail(e.target.value)} 
-                      required 
-                    />
+                    <Mail size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground transition-colors group-focus-within:text-accent" />
+                    <Input className="pl-12 h-14 rounded-2xl bg-card border-border/50 focus:bg-background transition-all shadow-sm" type="email" placeholder="name@example.com" value={email} onChange={e => setEmail(e.target.value)} required />
                   </div>
                 </div>
 
-                {/* Password Field */}
                 {mode !== 'forgot' && (
                   <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <Label className="text-[9px] font-mono tracking-[0.2em] uppercase text-white/50">Access Cipher (Password)</Label>
+                    <div className="flex items-center justify-between ml-1">
+                      <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Password</Label>
                       {mode === 'login' && (
-                        <button type="button" onClick={() => setMode('forgot')} className="text-[9px] font-mono tracking-[0.2em] uppercase font-bold text-[#D4AF37] hover:text-white transition-colors">
-                          Recover Cipher?
+                        <button type="button" onClick={() => setMode('forgot')} className="text-xs font-bold text-accent hover:text-accent/80 transition-colors">
+                          Forgot password?
                         </button>
                       )}
                     </div>
                     <div className="relative group">
-                      <Lock size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-white/30 transition-colors group-focus-within:text-[#D4AF37]" />
-                      <Input 
-                        className="pl-12 pr-12 h-12 rounded-none bg-[#121215] border-white/10 text-white font-mono text-sm tracking-widest focus:border-[#D4AF37] transition-all" 
-                        type={showPassword ? 'text' : 'password'} 
-                        placeholder="••••••••" 
-                        value={password} 
-                        onChange={e => setPassword(e.target.value)} 
-                        required 
-                      />
-                      <button type="button" className="absolute right-4 top-1/2 -translate-y-1/2 text-white/30 hover:text-white" onClick={() => setShowPassword(!showPassword)}>
-                        {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                      <Lock size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground transition-colors group-focus-within:text-accent" />
+                      <Input className="pl-12 pr-12 h-14 rounded-2xl bg-card border-border/50 focus:bg-background transition-all shadow-sm" type={showPassword ? 'text' : 'password'} placeholder="••••••••" value={password} onChange={e => setPassword(e.target.value)} required />
+                      <button type="button" className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors" onClick={() => setShowPassword(!showPassword)}>
+                        {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                       </button>
                     </div>
                   </div>
                 )}
 
-                {/* Submit Button */}
-                <Button 
-                  type="submit" 
-                  className="w-full h-12 rounded-none bg-[#D4AF37] text-black hover:bg-white font-black text-[10px] font-mono tracking-[0.2em] uppercase transition-all shadow-[4px_4px_0px_#4E111A] active:translate-y-1 active:shadow-none" 
-                  disabled={loading}
-                >
+                <Button type="submit" className="w-full h-14 mt-2 rounded-2xl bg-foreground text-background hover:bg-foreground/90 font-black text-base shadow-xl shadow-black/5 transition-all active:scale-[0.98]" disabled={loading}>
                   {loading ? (
                     <div className="flex items-center gap-2">
-                      <div className="w-4 h-4 border-2 border-black/20 border-t-black rounded-full animate-spin" />
-                      Processing...
+                      <div className="w-4 h-4 border-2 border-background/30 border-t-background rounded-full animate-spin" />
+                      Please wait...
                     </div>
                   ) : (
                     <div className="flex items-center gap-2">
-                      {mode === 'login' ? 'Execute Login' : mode === 'signup' ? 'Confirm Registration' : 'Transmit Recovery'}
-                      <Terminal size={14} className="fill-current" />
+                      {mode === 'login' ? 'Sign In' : mode === 'signup' ? 'Create Account' : 'Send Reset Link'}
+                      <Zap size={16} className="fill-current" />
                     </div>
                   )}
                 </Button>
@@ -334,13 +334,12 @@ const Auth = () => {
             </motion.div>
           </AnimatePresence>
 
-          {/* Mode Switcher */}
-          <div className="mt-12 text-center border-t border-white/10 pt-6">
-            <p className="text-[10px] font-mono tracking-widest uppercase text-white/40">
+          <div className="mt-10 text-center">
+            <p className="text-sm font-medium text-muted-foreground">
               {mode === 'login' ? (
-                <>Unregistered operative? <button onClick={() => setMode('signup')} className="text-[#D4AF37] font-bold hover:text-white transition-colors">Apply for Clearance</button></>
+                <>Don't have an account? <button onClick={() => setMode('signup')} className="text-accent font-bold hover:underline transition-all">Sign up</button></>
               ) : (
-                <>Already possessing clearance? <button onClick={() => setMode('login')} className="text-[#D4AF37] font-bold hover:text-white transition-colors">Authenticate</button></>
+                <>Already have an account? <button onClick={() => setMode('login')} className="text-accent font-bold hover:underline transition-all">Sign in</button></>
               )}
             </p>
           </div>
