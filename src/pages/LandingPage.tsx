@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { Search, MapPin, Star, Shield, ArrowRight, Building2, ChevronRight, Sparkles, Home as HomeIcon, Map, CheckCircle2, Zap } from 'lucide-react';
+import { Search, MapPin, Star, Shield, ArrowRight, Building2, ChevronRight, Sparkles, Home as HomeIcon, Map, CheckCircle2, Zap, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -34,7 +34,7 @@ const TESTIMONIALS = [
 
 export default function LandingPage() {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
   const [scrolled, setScrolled] = useState(false);
   const [activeTestimonial, setActiveTestimonial] = useState(0);
@@ -146,13 +146,21 @@ export default function LandingPage() {
 
           <div className="flex items-center gap-4">
             {user ? (
-              isAdmin ? (
-                <Button variant="ghost" className="hidden sm:flex rounded-none font-mono text-[10px] tracking-widest uppercase hover:bg-white/5 text-white border border-transparent hover:border-white/10" onClick={() => navigate('/dashboard')}>
-                  Admin Dashboard
+              <>
+                {isAdmin && (
+                  <Button variant="ghost" className="hidden sm:flex rounded-none font-mono text-[10px] tracking-widest uppercase hover:bg-white/5 text-white border border-transparent hover:border-white/10" onClick={() => navigate('/dashboard')}>
+                    Admin Dashboard
+                  </Button>
+                )}
+                <Button
+                  variant="ghost"
+                  className="hidden sm:flex items-center gap-2 rounded-none font-mono text-[10px] tracking-widest uppercase text-white/50 hover:text-[#A62639] hover:bg-[#A62639]/10 border border-transparent hover:border-[#A62639]/30 transition-colors"
+                  onClick={async () => { await signOut(); navigate('/auth'); }}
+                >
+                  <LogOut size={13} />
+                  Sign Out
                 </Button>
-              ) : (
-                ""
-              )
+              </>
             ) : (
               <Button variant="ghost" className="hidden sm:flex rounded-none font-mono text-[10px] tracking-widest uppercase hover:bg-white/5 text-white border border-transparent hover:border-white/10" onClick={() => navigate('/auth')}>
                 Sign In
