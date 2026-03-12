@@ -19,6 +19,7 @@ export function usePublicProperties(filters: PropertyFilters = {}) {
   return useQuery({
     queryKey: ['public-properties', filters],
     queryFn: async () => {
+      // 1. Fetch matching locations (without limits yet)
       let q = supabase
         .from('properties')
         .select('*, owners:owner_id(name), rooms(id, room_number, room_type, bed_count, rent_per_bed, expected_rent, status, floor, furnishing, bathroom_type, amenities, beds(id, bed_number, status, current_rent))')
@@ -29,15 +30,12 @@ export function usePublicProperties(filters: PropertyFilters = {}) {
       if (filters.area) q = q.ilike('area', `%${filters.area}%`);
       if (filters.gender && filters.gender !== 'any') q = q.eq('gender_allowed', filters.gender);
 
-      const page = filters.page || 0;
-      const limit = filters.limit || 50;
-      q = q.range(page * limit, (page + 1) * limit - 1);
-
       const { data, error } = await q;
       if (error) throw error;
 
-      // Client-side filtering for budget and sharing type
       let results = data || [];
+
+      // 2. Apply Client-Side Filters FIRST
       if (filters.budgetMax) {
         results = results.filter((p: any) => {
           const rents = (p.rooms || []).map((r: any) => r.rent_per_bed || r.expected_rent).filter(Boolean);
@@ -45,6 +43,7 @@ export function usePublicProperties(filters: PropertyFilters = {}) {
           return Math.min(...rents) <= filters.budgetMax!;
         });
       }
+      
       if (filters.sharingTypes?.length) {
         const sharingMap: Record<string, number> = { 'Private': 1, '2 Sharing': 2, '3 Sharing': 3, '4 Sharing': 4 };
         const bedCounts = filters.sharingTypes.map(s => sharingMap[s]).filter(Boolean);
@@ -52,11 +51,17 @@ export function usePublicProperties(filters: PropertyFilters = {}) {
           (p.rooms || []).some((r: any) => bedCounts.includes(r.bed_count))
         );
       }
-      return results;
+
+      // 3. Apply Pagination LAST (Client-Side)
+      const page = filters.page || 0;
+      const limit = filters.limit || 50;
+      
+      const paginatedResults = results.slice(page * limit, (page + 1) * limit);
+      
+      return paginatedResults;
     },
   });
 }
-
 export function usePublicProperty(propertyId: string | undefined) {
   return useQuery({
     queryKey: ['public-property', propertyId],
@@ -96,6 +101,7 @@ export function useSimilarProperties(area?: string | null, city?: string | null,
 }
 
 export function useAvailableCities() {
+  
   return useQuery({
     queryKey: ['available-cities'],
     queryFn: async () => {
@@ -171,5 +177,48 @@ export function useConfirmReservation() {
       if ((data as any)?.error) throw new Error((data as any).error);
       return data;
     },
+  });
+}
+export function useCreateVisitRequest() {
+  return useMutation({
+    mutationFn: async (params: {
+      property_id: string;
+      name: string;
+      phone: string;
+      visit_type: 'physical' | 'virtual';
+      requested_date: string;
+    }) => {
+      const { data, error } = await supabase.rpc('request_property_visit' as any, {
+        p_property_id: params.property_id,
+        p_name: params.name,
+        p_phone: params.phone,
+        p_visit_type: params.visit_type,
+        p_requested_date: params.requested_date
+      });
+      if (error) throw error;
+      return data;
+    }
+  });
+}
+
+export function useCreatePaymentIntent() {
+  return useMutation({
+    mutationFn: async (reservationId: string) => {
+      const { data, error } = await supabase.functions.invoke('create-payment-intent', {
+        body: { reservation_id: reservationId }
+      });
+      if (error) throw error;
+      return data;
+    }
+  });
+}
+
+export function useCreatePaymentTransaction() {
+  return useMutation({
+    mutationFn: async (params: { reservation_id: string; amount: number; gateway_transaction_id: string; status: string }) => {
+      const { data, error } = await supabase.from('payment_transactions').insert(params)
+      if (error) throw error;
+      return data;
+    }
   });
 }

@@ -8,15 +8,20 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useAllRoomsWithDetails, useCreateRoom, useConfirmRoomStatus, useUpdateRoom } from '@/hooks/useInventoryData';
 import { usePropertiesWithOwners } from '@/hooks/useInventoryData';
-import { Plus, Search, Bed, Lock, Unlock, CheckCircle2, AlertTriangle, Home, Filter } from 'lucide-react';
+import { Plus, Search, Bed, Lock, Unlock, CheckCircle2, AlertTriangle, Home, Filter, RefreshCw, Hash, Database } from 'lucide-react';
 import { toast } from 'sonner';
 import { formatDistanceToNow } from 'date-fns';
+import { motion, AnimatePresence } from 'framer-motion';
+
+const springTransition = { type: 'spring', bounce: 0, duration: 0.6, ease: [0.32, 0.72, 0, 1] };
+const staggerContainer = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.05 } } };
+const fadeUp: any = { hidden: { opacity: 0, y: 15 }, show: { opacity: 1, y: 0, transition: springTransition } };
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; icon: any }> = {
-  vacant: { label: 'Vacant', color: 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20', icon: CheckCircle2 },
-  vacating: { label: 'Vacating', color: 'bg-amber-500/10 text-amber-600 border-amber-500/20', icon: AlertTriangle },
-  occupied: { label: 'Occupied', color: 'bg-sky-500/10 text-sky-600 border-sky-500/20', icon: Home },
-  blocked: { label: 'Blocked', color: 'bg-destructive/10 text-destructive border-destructive/20', icon: Lock },
+  vacant: { label: 'VACANT', color: 'bg-emerald-500/10 text-emerald-500 border-emerald-500/30', icon: CheckCircle2 },
+  vacating: { label: 'VACATING', color: 'bg-[#D4AF37]/10 text-[#D4AF37] border-[#D4AF37]/30', icon: AlertTriangle },
+  occupied: { label: 'OCCUPIED', color: 'bg-sky-500/10 text-sky-500 border-sky-500/30', icon: Home },
+  blocked: { label: 'BLOCKED', color: 'bg-[#A62639]/10 text-[#A62639] border-[#A62639]/30', icon: Lock },
 };
 
 const Inventory = () => {
@@ -62,196 +67,266 @@ const Inventory = () => {
 
   const handleAddRoom = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.property_id || !form.room_number.trim()) { toast.error('Property and room number required'); return; }
-    await createRoom.mutateAsync({
-      property_id: form.property_id,
-      room_number: form.room_number.trim(),
-      floor: form.floor.trim() || null,
-      bed_count: parseInt(form.bed_count) || 1,
-      room_type: form.room_type.trim() || null,
-      expected_rent: form.expected_rent ? parseFloat(form.expected_rent) : null,
-      actual_rent: form.actual_rent ? parseFloat(form.actual_rent) : null,
-      notes: form.notes.trim() || null,
-    });
-    setAddOpen(false);
-    setForm({ property_id: '', room_number: '', floor: '', bed_count: '1', room_type: '', expected_rent: '', actual_rent: '', notes: '' });
+    if (!form.property_id || !form.room_number.trim()) { toast.error('Property mapping and room designation required'); return; }
+    try {
+      await createRoom.mutateAsync({
+        property_id: form.property_id,
+        room_number: form.room_number.trim(),
+        floor: form.floor.trim() || null,
+        bed_count: parseInt(form.bed_count) || 1,
+        room_type: form.room_type.trim() || null,
+        expected_rent: form.expected_rent ? parseFloat(form.expected_rent) : null,
+        actual_rent: form.actual_rent ? parseFloat(form.actual_rent) : null,
+        notes: form.notes.trim() || null,
+      });
+      setAddOpen(false);
+      setForm({ property_id: '', room_number: '', floor: '', bed_count: '1', room_type: '', expected_rent: '', actual_rent: '', notes: '' });
+      toast.success('Asset cell successfully mapped to registry.');
+    } catch (err: any) {
+      toast.error(err.message);
+    }
   };
 
   const handleConfirm = async (roomId: string) => {
-    await confirmStatus.mutateAsync({
-      room_id: roomId,
-      status: confirmForm.status,
-      notes: confirmForm.notes.trim() || null,
-    });
-    setConfirmOpen(null);
-    setConfirmForm({ status: 'vacant', notes: '' });
+    try {
+      await confirmStatus.mutateAsync({
+        room_id: roomId,
+        status: confirmForm.status,
+        notes: confirmForm.notes.trim() || null,
+      });
+      setConfirmOpen(null);
+      setConfirmForm({ status: 'vacant', notes: '' });
+      toast.success('Intelligence log updated. Status confirmed.');
+    } catch (err: any) {
+      toast.error(err.message);
+    }
   };
 
   return (
-    <AppLayout title="Room Inventory" subtitle="Real-time room availability">
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div />
+    <AppLayout title="Asset Database" subtitle="Real-time structural inventory & capacity tracking">
+      
+      {/* Texture: Subtle Victorian Wallpaper Grain */}
+      <div className="fixed inset-0 pointer-events-none opacity-[0.04] z-[-1] bg-[url('https://www.transparenttextures.com/patterns/dark-matter.png')]" />
+
+      <div className="max-w-[1600px] mx-auto space-y-12">
+        
+        {/* Top Control Bar */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-[#121215] border border-white/10 p-4">
+          
+          {/* Diagnostic Stats */}
+          <div className="flex flex-wrap items-center gap-4 text-[10px] font-mono tracking-[0.2em] text-white/50 uppercase">
+             <div className="flex items-center gap-2"><span className="text-white">{stats.total}</span> Cells</div>
+             <span className="w-1 h-1 bg-white/20 rounded-full" />
+             <div className="flex items-center gap-2 text-emerald-500"><span className="font-bold">{stats.vacant}</span> Vacant</div>
+             <span className="w-1 h-1 bg-white/20 rounded-full" />
+             <div className="flex items-center gap-2 text-[#D4AF37]"><span className="font-bold">{stats.vacating}</span> Vacating</div>
+             <span className="w-1 h-1 bg-white/20 rounded-full" />
+             <div className="flex items-center gap-2 text-[#A62639]"><span className="font-bold">{stats.locked}</span> Secured Locks</div>
+          </div>
+
           <Dialog open={addOpen} onOpenChange={setAddOpen}>
             <DialogTrigger asChild>
-              <Button size="sm" className="gap-1.5"><Plus size={14} /> Add Room</Button>
+              <Button className="w-full md:w-auto h-12 px-8 rounded-none bg-[#A62639] hover:bg-[#8A1A29] text-white font-black uppercase tracking-[0.2em] text-[10px] border-none shadow-[4px_4px_0px_#4E111A] active:translate-y-1 active:shadow-none transition-all">
+                <Plus size={14} className="mr-2" /> Map New Cell
+              </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[440px]">
-              <DialogHeader><DialogTitle className="font-display">Add Room</DialogTitle></DialogHeader>
-              <form onSubmit={handleAddRoom} className="space-y-3 mt-2">
-                <div className="space-y-1">
-                  <Label className="text-xs">Property *</Label>
+            
+            <DialogContent className="sm:max-w-[600px] rounded-none bg-[#0A0A0C] border-2 border-[#D4AF37] p-0 shadow-2xl">
+              <div className="p-6 border-b border-white/10 bg-[#121215] flex items-center justify-between">
+                <DialogTitle className="font-serif text-2xl italic text-white">Asset Registration Protocol</DialogTitle>
+                <Hash className="text-[#D4AF37]" size={20} />
+              </div>
+              
+              <form onSubmit={handleAddRoom} className="p-8 space-y-6">
+                <div className="space-y-2">
+                  <Label className="text-[9px] font-mono tracking-widest uppercase text-[#D4AF37]">Designated Property *</Label>
                   <Select value={form.property_id} onValueChange={v => setForm(f => ({ ...f, property_id: v }))}>
-                    <SelectTrigger><SelectValue placeholder="Select property" /></SelectTrigger>
-                    <SelectContent>
+                    <SelectTrigger className="h-12 rounded-none bg-[#121215] border-white/10 text-white font-mono text-xs focus:ring-1 focus:ring-[#D4AF37]">
+                      <SelectValue placeholder="Select primary asset..." />
+                    </SelectTrigger>
+                    <SelectContent className="rounded-none bg-[#121215] border border-[#D4AF37]">
                       {properties?.map((p: any) => (
-                        <SelectItem key={p.id} value={p.id}>{p.name} {p.area ? `— ${p.area}` : ''}</SelectItem>
+                        <SelectItem key={p.id} value={p.id} className="font-mono text-xs focus:bg-[#D4AF37]/20 focus:text-white">
+                          {p.name} {p.area ? `[${p.area}]` : ''}
+                        </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="grid grid-cols-3 gap-3">
-                  <div className="space-y-1"><Label className="text-xs">Room # *</Label><Input placeholder="101" value={form.room_number} onChange={e => setForm(f => ({ ...f, room_number: e.target.value }))} /></div>
-                  <div className="space-y-1"><Label className="text-xs">Floor</Label><Input placeholder="1st" value={form.floor} onChange={e => setForm(f => ({ ...f, floor: e.target.value }))} /></div>
-                  <div className="space-y-1"><Label className="text-xs">Beds</Label><Input type="number" min={1} value={form.bed_count} onChange={e => setForm(f => ({ ...f, bed_count: e.target.value }))} /></div>
+                
+                <div className="grid grid-cols-3 gap-6">
+                  <div className="space-y-2">
+                    <Label className="text-[9px] font-mono tracking-widest uppercase text-[#D4AF37]">Cell ID *</Label>
+                    <Input className="h-12 rounded-none bg-[#121215] border-white/10 focus:border-[#D4AF37] text-white font-mono text-xs" placeholder="e.g. 301" value={form.room_number} onChange={e => setForm(f => ({ ...f, room_number: e.target.value }))} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-[9px] font-mono tracking-widest uppercase text-[#D4AF37]">Level</Label>
+                    <Input className="h-12 rounded-none bg-[#121215] border-white/10 focus:border-[#D4AF37] text-white font-mono text-xs" placeholder="e.g. 3rd" value={form.floor} onChange={e => setForm(f => ({ ...f, floor: e.target.value }))} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-[9px] font-mono tracking-widest uppercase text-[#D4AF37]">Capacity</Label>
+                    <Input type="number" min={1} className="h-12 rounded-none bg-[#121215] border-white/10 focus:border-[#D4AF37] text-white font-mono text-xs" value={form.bed_count} onChange={e => setForm(f => ({ ...f, bed_count: e.target.value }))} />
+                  </div>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-1"><Label className="text-xs">Room Type</Label><Input placeholder="Single / Double / Triple" value={form.room_type} onChange={e => setForm(f => ({ ...f, room_type: e.target.value }))} /></div>
-                  <div className="space-y-1"><Label className="text-xs">Expected Rent ₹</Label><Input type="number" placeholder="8000" value={form.expected_rent} onChange={e => setForm(f => ({ ...f, expected_rent: e.target.value }))} /></div>
+                
+                <div className="grid grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <Label className="text-[9px] font-mono tracking-widest uppercase text-[#D4AF37]">Class</Label>
+                    <Input className="h-12 rounded-none bg-[#121215] border-white/10 focus:border-[#D4AF37] text-white font-mono text-xs" placeholder="Single / Double" value={form.room_type} onChange={e => setForm(f => ({ ...f, room_type: e.target.value }))} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-[9px] font-mono tracking-widest uppercase text-[#D4AF37]">Target Value ₹</Label>
+                    <Input type="number" className="h-12 rounded-none bg-[#121215] border-white/10 focus:border-[#D4AF37] text-white font-mono text-xs" placeholder="e.g. 15000" value={form.expected_rent} onChange={e => setForm(f => ({ ...f, expected_rent: e.target.value }))} />
+                  </div>
                 </div>
-                <div className="flex justify-end gap-2 pt-2">
-                  <Button type="button" variant="outline" size="sm" onClick={() => setAddOpen(false)}>Cancel</Button>
-                  <Button type="submit" size="sm" disabled={createRoom.isPending}>{createRoom.isPending ? 'Adding...' : 'Add Room'}</Button>
+                
+                <div className="flex justify-end gap-4 pt-6 border-t border-white/10">
+                  <Button type="button" variant="ghost" className="rounded-none text-[10px] font-black tracking-widest uppercase hover:bg-white/5 text-white/50 hover:text-white" onClick={() => setAddOpen(false)}>Abort</Button>
+                  <Button type="submit" disabled={createRoom.isPending} className="rounded-none bg-[#D4AF37] hover:bg-white text-black font-black uppercase tracking-widest text-[10px] px-8 h-12 transition-colors">
+                    {createRoom.isPending ? 'Processing...' : 'Authorize Cell'}
+                  </Button>
                 </div>
               </form>
             </DialogContent>
           </Dialog>
         </div>
 
-        {/* Stats */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-          {[
-            { label: 'Total Rooms', value: stats.total, color: 'text-foreground' },
-            { label: 'Vacant (Available)', value: stats.vacant, color: 'text-emerald-600' },
-            { label: 'Vacating Soon', value: stats.vacating, color: 'text-amber-600' },
-            { label: 'Occupied', value: stats.occupied, color: 'text-sky-600' },
-            { label: 'Blocked', value: stats.blocked, color: 'text-destructive' },
-            { label: 'Auto-Locked ⚠', value: stats.locked, color: 'text-orange-600' },
-          ].map(s => (
-            <div key={s.label} className="p-3 rounded-xl border bg-card text-center">
-              <p className={`text-2xl font-bold font-display ${s.color}`}>{s.value}</p>
-              <p className="text-[10px] text-muted-foreground mt-0.5">{s.label}</p>
-            </div>
-          ))}
-        </div>
-
-        {/* Filters */}
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="relative flex-1 max-w-xs">
-            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-            <Input placeholder="Search rooms, properties, owners..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9 h-9" />
+        {/* Database Filters */}
+        <div className="flex flex-col sm:flex-row items-center gap-4 bg-[#0A0A0C] border-y border-white/10 py-4 px-2">
+          <div className="relative w-full sm:max-w-md flex items-center border border-white/10 bg-[#121215] focus-within:border-[#D4AF37] transition-colors">
+            <Search size={14} className="absolute left-4 text-white/30" />
+            <input 
+              placeholder="QUERY CELL DESIGNATION OR ASSET..." 
+              value={search} 
+              onChange={e => setSearch(e.target.value)} 
+              className="w-full bg-transparent h-10 pl-10 pr-4 text-[11px] font-mono tracking-widest text-white placeholder:text-white/20 outline-none" 
+            />
           </div>
+          
           <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-[140px] h-9"><Filter size={13} className="mr-1" /><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Status</SelectItem>
-              <SelectItem value="vacant">Vacant</SelectItem>
-              <SelectItem value="vacating">Vacating</SelectItem>
-              <SelectItem value="occupied">Occupied</SelectItem>
-              <SelectItem value="blocked">Blocked</SelectItem>
+            <SelectTrigger className="w-full sm:w-[200px] h-10 rounded-none bg-[#121215] border-white/10 text-[10px] font-mono tracking-widest uppercase focus:ring-1 focus:ring-[#D4AF37]">
+              <Filter size={12} className="mr-2 text-[#D4AF37]" /> <SelectValue />
+            </SelectTrigger>
+            <SelectContent className="rounded-none bg-[#121215] border-[#D4AF37]">
+              <SelectItem value="all" className="text-[10px] font-mono tracking-widest uppercase">All States</SelectItem>
+              <SelectItem value="vacant" className="text-[10px] font-mono tracking-widest uppercase text-emerald-500 focus:text-emerald-400">Vacant</SelectItem>
+              <SelectItem value="vacating" className="text-[10px] font-mono tracking-widest uppercase text-[#D4AF37] focus:text-[#D4AF37]">Vacating</SelectItem>
+              <SelectItem value="occupied" className="text-[10px] font-mono tracking-widest uppercase text-sky-500 focus:text-sky-400">Occupied</SelectItem>
+              <SelectItem value="blocked" className="text-[10px] font-mono tracking-widest uppercase text-[#A62639] focus:text-[#A62639]">Blocked</SelectItem>
             </SelectContent>
           </Select>
+          
           <Select value={lockedFilter} onValueChange={setLockedFilter}>
-            <SelectTrigger className="w-[140px] h-9"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Locks</SelectItem>
-              <SelectItem value="locked">Auto-Locked</SelectItem>
-              <SelectItem value="unlocked">Confirmed</SelectItem>
+            <SelectTrigger className="w-full sm:w-[200px] h-10 rounded-none bg-[#121215] border-white/10 text-[10px] font-mono tracking-widest uppercase focus:ring-1 focus:ring-[#D4AF37]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent className="rounded-none bg-[#121215] border-[#D4AF37]">
+              <SelectItem value="all" className="text-[10px] font-mono tracking-widest uppercase">All Clearance</SelectItem>
+              <SelectItem value="locked" className="text-[10px] font-mono tracking-widest uppercase text-[#A62639] focus:text-[#A62639]">System Locked</SelectItem>
+              <SelectItem value="unlocked" className="text-[10px] font-mono tracking-widest uppercase text-white/50 focus:text-white">Standard</SelectItem>
             </SelectContent>
           </Select>
         </div>
 
-        {/* Room Grid */}
+        {/* Asset Grid */}
         {isLoading ? (
-          <div className="text-sm text-muted-foreground">Loading inventory...</div>
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {[...Array(8)].map((_, i) => <div key={i} className="h-48 rounded-none bg-white/5 animate-pulse border border-white/10" />)}
+          </div>
         ) : !filtered.length ? (
-          <div className="text-center py-16 text-muted-foreground">
-            <Bed size={40} className="mx-auto mb-3 opacity-40" />
-            <p className="font-medium">No rooms found</p>
-            <p className="text-xs mt-1">Add rooms to start tracking inventory</p>
+          <div className="text-center py-32 bg-[#0A0A0C] border border-white/5">
+            <Database size={40} className="mx-auto mb-6 text-white/10" />
+            <p className="font-serif text-2xl italic text-white mb-2">No Cells Located</p>
+            <p className="text-[11px] font-mono tracking-widest text-white/40 uppercase">Adjust search parameters</p>
           </div>
         ) : (
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {filtered.map((room: any) => {
-              const sc = STATUS_CONFIG[room.status] || STATUS_CONFIG.vacant;
-              const StatusIcon = sc.icon;
-              const lastConfirmed = room.last_confirmed_at ? formatDistanceToNow(new Date(room.last_confirmed_at), { addSuffix: true }) : 'Never';
+          <motion.div variants={staggerContainer} initial="hidden" animate="show" className="grid gap-px sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 bg-white/10 border border-white/10 p-px">
+            <AnimatePresence>
+              {filtered.map((room: any) => {
+                const sc = STATUS_CONFIG[room.status] || STATUS_CONFIG.vacant;
+                const StatusIcon = sc.icon;
+                const lastConfirmed = room.last_confirmed_at ? formatDistanceToNow(new Date(room.last_confirmed_at), { addSuffix: true }) : 'NO LOGS';
 
-              return (
-                <div key={room.id} className={`p-4 rounded-xl border bg-card hover:shadow-md transition-shadow ${room.auto_locked ? 'border-orange-400/50 bg-orange-50/30 dark:bg-orange-950/10' : ''}`}>
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <h3 className="font-semibold text-sm">Room {room.room_number}</h3>
-                        {room.auto_locked && <Lock size={12} className="text-orange-500" />}
-                      </div>
-                      <p className="text-xs text-muted-foreground">{room.properties?.name || 'Unknown'}</p>
-                      {room.properties?.owners?.name && (
-                        <p className="text-[10px] text-muted-foreground">Owner: {room.properties.owners.name}</p>
-                      )}
-                    </div>
-                    <Badge className={`text-[10px] border ${sc.color}`}>
-                      <StatusIcon size={10} className="mr-1" />
-                      {sc.label}
-                    </Badge>
-                  </div>
+                return (
+                  <motion.div 
+                    key={room.id} 
+                    variants={fadeUp}
+                    layout
+                    className={`group relative bg-[#0A0A0C] p-6 transition-all duration-500 overflow-hidden ${room.auto_locked ? 'shadow-[inset_0_0_0_2px_rgba(166,38,57,0.5)]' : 'hover:bg-[#121215]'}`}
+                  >
+                    {/* Auto-Locked Visual Glitch */}
+                    {room.auto_locked && <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-[#A62639] to-transparent opacity-50" />}
 
-                  <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
-                    <div><span className="text-muted-foreground">Beds:</span> {room.bed_count}</div>
-                    {room.room_type && <div><span className="text-muted-foreground">Type:</span> {room.room_type}</div>}
-                    {room.expected_rent && <div><span className="text-muted-foreground">Ask:</span> ₹{Number(room.expected_rent).toLocaleString()}</div>}
-                    {room.actual_rent && <div><span className="text-muted-foreground">Last:</span> ₹{Number(room.actual_rent).toLocaleString()}</div>}
-                    {room.vacating_date && <div className="col-span-2"><span className="text-muted-foreground">Vacating:</span> {room.vacating_date}</div>}
-                  </div>
-
-                  <div className="mt-3 pt-3 border-t flex items-center justify-between">
-                    <p className="text-[10px] text-muted-foreground">Confirmed {lastConfirmed}</p>
-                    <Dialog open={confirmOpen === room.id} onOpenChange={v => setConfirmOpen(v ? room.id : null)}>
-                      <DialogTrigger asChild>
-                        <Button variant="outline" size="sm" className="h-7 text-[10px] gap-1">
-                          <CheckCircle2 size={11} /> Confirm
-                        </Button>
-                      </DialogTrigger>
-                      <DialogContent className="sm:max-w-[340px]">
-                        <DialogHeader><DialogTitle className="text-sm font-display">Confirm Room {room.room_number}</DialogTitle></DialogHeader>
-                        <div className="space-y-3 mt-2">
-                          <div className="space-y-1">
-                            <Label className="text-xs">Current Status</Label>
-                            <Select value={confirmForm.status} onValueChange={v => setConfirmForm(f => ({ ...f, status: v }))}>
-                              <SelectTrigger><SelectValue /></SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="vacant">Vacant</SelectItem>
-                                <SelectItem value="vacating">Vacating</SelectItem>
-                                <SelectItem value="occupied">Occupied</SelectItem>
-                                <SelectItem value="blocked">Blocked</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </div>
-                          <div className="space-y-1">
-                            <Label className="text-xs">Notes</Label>
-                            <Input placeholder="Any notes..." value={confirmForm.notes} onChange={e => setConfirmForm(f => ({ ...f, notes: e.target.value }))} />
-                          </div>
-                          <Button className="w-full" size="sm" onClick={() => handleConfirm(room.id)} disabled={confirmStatus.isPending}>
-                            {confirmStatus.isPending ? 'Confirming...' : 'Confirm Status'}
-                          </Button>
+                    <div className="flex items-start justify-between mb-6 relative z-10">
+                      <div>
+                        <div className="flex items-center gap-3 mb-1">
+                          <h3 className="font-serif text-3xl text-white tracking-tighter">{room.room_number}</h3>
+                          {room.auto_locked && <span title="System Lock Engaged"><Lock size={14} className="text-[#A62639]" /></span>}
                         </div>
-                      </DialogContent>
-                    </Dialog>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+                        <p className="text-[10px] font-mono text-[#D4AF37] tracking-[0.2em] uppercase line-clamp-1">{room.properties?.name || 'UNKNOWN ASSET'}</p>
+                      </div>
+                      <Badge className={`rounded-none px-2 py-1 text-[8px] font-black tracking-widest border ${sc.color}`}>
+                        {sc.label}
+                      </Badge>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-y-4 gap-x-2 text-[10px] font-mono tracking-widest uppercase text-white/40 mb-8 relative z-10">
+                      <div><span className="block text-white/20 mb-0.5">Capacity</span><span className="text-white/80">{room.bed_count} BEDS</span></div>
+                      {room.room_type && <div><span className="block text-white/20 mb-0.5">Class</span><span className="text-white/80">{room.room_type}</span></div>}
+                      {room.expected_rent && <div><span className="block text-white/20 mb-0.5">Target Value</span><span className="text-white/80">₹{room.expected_rent}</span></div>}
+                      {room.actual_rent && <div><span className="block text-white/20 mb-0.5">Current Yield</span><span className="text-white/80">₹{room.actual_rent}</span></div>}
+                    </div>
+
+                    {/* Footer Confirmation Terminal */}
+                    <div className="pt-4 border-t border-white/10 flex items-center justify-between relative z-10">
+                      <div>
+                        <p className="text-[8px] font-black uppercase tracking-[0.2em] text-white/30">Last Verification</p>
+                        <p className="text-[10px] font-mono text-white/50 tracking-widest uppercase">{lastConfirmed}</p>
+                      </div>
+                      
+                      <Dialog open={confirmOpen === room.id} onOpenChange={v => setConfirmOpen(v ? room.id : null)}>
+                        <DialogTrigger asChild>
+                          <button className="flex items-center justify-center w-8 h-8 rounded-none bg-white/5 border border-white/10 hover:border-[#D4AF37] hover:text-[#D4AF37] transition-all">
+                            <RefreshCw size={12} />
+                          </button>
+                        </DialogTrigger>
+                        <DialogContent className="sm:max-w-[400px] rounded-none bg-[#0A0A0C] border-2 border-[#D4AF37] p-0 shadow-2xl">
+                          <div className="p-6 border-b border-white/10 bg-[#121215]">
+                            <DialogTitle className="font-serif text-xl italic text-white">Log Intelligence: Cell {room.room_number}</DialogTitle>
+                          </div>
+                          <div className="p-8 space-y-6">
+                            <div className="space-y-2">
+                              <Label className="text-[9px] font-mono tracking-widest uppercase text-[#D4AF37]">Visual Confirmation Status</Label>
+                              <Select value={confirmForm.status} onValueChange={v => setConfirmForm(f => ({ ...f, status: v }))}>
+                                <SelectTrigger className="h-12 rounded-none bg-[#121215] border-white/10 text-white font-mono text-xs focus:ring-1 focus:ring-[#D4AF37]">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent className="rounded-none bg-[#121215] border border-[#D4AF37]">
+                                  <SelectItem value="vacant" className="font-mono text-xs focus:bg-emerald-500/20 focus:text-emerald-500">Vacant - Clear</SelectItem>
+                                  <SelectItem value="vacating" className="font-mono text-xs focus:bg-[#D4AF37]/20 focus:text-[#D4AF37]">Vacating - Pending</SelectItem>
+                                  <SelectItem value="occupied" className="font-mono text-xs focus:bg-sky-500/20 focus:text-sky-500">Occupied - Active</SelectItem>
+                                  <SelectItem value="blocked" className="font-mono text-xs focus:bg-[#A62639]/20 focus:text-[#A62639]">Blocked - Inaccessible</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            <div className="space-y-2">
+                              <Label className="text-[9px] font-mono tracking-widest uppercase text-[#D4AF37]">Agent Notes (Optional)</Label>
+                              <Input className="h-12 rounded-none bg-[#121215] border-white/10 focus:border-[#D4AF37] text-white font-mono text-xs" placeholder="Record physical state..." value={confirmForm.notes} onChange={e => setConfirmForm(f => ({ ...f, notes: e.target.value }))} />
+                            </div>
+                            <div className="pt-4 border-t border-white/10">
+                              <Button className="w-full h-12 rounded-none bg-[#D4AF37] hover:bg-white text-black font-black uppercase tracking-widest text-[10px] transition-colors" onClick={() => handleConfirm(room.id)} disabled={confirmStatus.isPending}>
+                                {confirmStatus.isPending ? 'Encrypting Log...' : 'Confirm Verification'}
+                              </Button>
+                            </div>
+                          </div>
+                        </DialogContent>
+                      </Dialog>
+                    </div>
+                  </motion.div>
+                );
+              })}
+            </AnimatePresence>
+          </motion.div>
         )}
       </div>
     </AppLayout>

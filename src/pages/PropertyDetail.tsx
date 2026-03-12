@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Star, Shield, MapPin, Bed, Wifi, Coffee, Shirt, ShieldCheck, Sparkles, Users, MessageCircle, Video, CalendarCheck, CreditCard, Clock, Check, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { usePublicProperty, useCreateReservation, useConfirmReservation, useSimilarProperties } from '@/hooks/usePublicData';
+import { usePublicProperty, useCreateReservation, useConfirmReservation, useSimilarProperties, useCreateVisitRequest, useCreatePaymentIntent, useCreatePaymentTransaction } from '@/hooks/usePublicData';
 import { toast } from 'sonner';
 import { motion } from 'framer-motion';
 import PropertyChat from '@/components/PropertyChat';
@@ -21,22 +21,37 @@ const AMENITY_ICONS: Record<string, any> = {
 
 type ActionMode = null | 'chat' | 'virtual_tour' | 'schedule_visit' | 'pre_book';
 
+const springTransition: any = { type: 'spring', bounce: 0, duration: 0.6, ease: [0.32, 0.72, 0, 1] };
+
 export default function PropertyDetail() {
   const { propertyId } = useParams();
   const navigate = useNavigate();
   const { data: property, isLoading } = usePublicProperty(propertyId);
   const createReservation = useCreateReservation();
   const confirmReservation = useConfirmReservation();
+  const createPaymentIntent = useCreatePaymentIntent();
+  const createTransaction = useCreatePaymentTransaction();
 
   const [actionMode, setActionMode] = useState<ActionMode>(null);
   const [chatOpen, setChatOpen] = useState(false);
   const [selectedRoom, setSelectedRoom] = useState<any>(null);
   const [selectedBed, setSelectedBed] = useState<any>(null);
   const [customerForm, setCustomerForm] = useState({ name: '', phone: '', email: '', moveInDate: '' });
+  const [scheduleForm, setScheduleForm] = useState({ name: '', phone: '', date: '', time: '' });
+  const [virtualForm, setVirtualForm] = useState({ name: '', phone: '', slot: '' });
   const [reservationResult, setReservationResult] = useState<any>(null);
   const [heroIdx, setHeroIdx] = useState(0);
 
   const { data: similarProperties } = useSimilarProperties(property?.area, property?.city, propertyId);
+  const createVisitRequest = useCreateVisitRequest();
+
+  
+  useEffect(() => {
+    const script = document.createElement('script');
+    script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+    script.async = true;
+    document.body.appendChild(script);
+  }, []);
 
   if (isLoading) {
     return (
@@ -92,16 +107,105 @@ export default function PropertyDetail() {
     }
   };
 
+
   const handleConfirmPayment = async () => {
     if (!reservationResult?.reservation_id) return;
     try {
-      await confirmReservation.mutateAsync({
-        reservation_id: reservationResult.reservation_id,
-        payment_reference: 'SIM_' + Date.now(),
+      // 1. Call Deno Edge Function to Initialize Order
+      const intentData = await createPaymentIntent.mutateAsync(reservationResult.reservation_id);
+
+      // 2. Open Razorpay Checkout Modal
+      const options = {
+        key: intentData.key, 
+        amount: intentData.amount, 
+        currency: intentData.currency,
+        name: "Gharpayy",
+        description: "PG Bed Reservation",
+        order_id: intentData.order_id,
+        prefill: {
+            name: intentData.customer_name,
+            email: intentData.customer_email,
+            contact: intentData.customer_phone
+        },
+        theme: { color: "#F97316" }, // Gharpayy accent color (or similar)
+        
+        handler: async function (response: any) {
+          // 3. User paid successfully! Razorpay returns the payload
+          toast.success("Payment successful! Finalizing booking...", { duration: 5000 });
+          
+          try {
+             // 4. Log the transaction in our database
+             await createTransaction.mutateAsync({
+                 reservation_id: reservationResult.reservation_id,
+                 amount: intentData.amount / 100, // Storing in INR, not paise
+                 gateway_transaction_id: response.razorpay_payment_id,
+                 status: 'success'
+             });
+
+             // 5. Update Reservation Status & Create Lead/Booking
+             await confirmReservation.mutateAsync({
+                 reservation_id: reservationResult.reservation_id,
+                 payment_reference: response.razorpay_payment_id
+             });
+             
+             toast.success('Booking confirmed! Welcome to Gharpayy!');
+             setActionMode(null);
+             setReservationResult(null);
+
+          } catch (dbErr: any) {
+             toast.error("Payment authorized but booking failed: " + dbErr.message);
+          }
+        }
+      };
+
+      const rzp = new (window as any).Razorpay(options);
+      rzp.on('payment.failed', function (response: any){
+          toast.error("Payment failed. Please try again.");
       });
-      toast.success('Booking confirmed! Our team will contact you shortly.');
+      rzp.open();
+
+    } catch (e: any) {
+      toast.error("Failed to initialize payment: " + e.message);
+    }
+  };
+
+  const handleScheduleVisit = async () => {
+    if (!scheduleForm.name || !scheduleForm.phone || !scheduleForm.date) {
+      toast.error('Please provide name, phone, and date.');
+      return;
+    }
+    try {
+      await createVisitRequest.mutateAsync({
+        property_id: property.id,
+        name: scheduleForm.name,
+        phone: scheduleForm.phone,
+        visit_type: 'physical',
+        requested_date: `${scheduleForm.date} ${scheduleForm.time}`.trim(),
+      });
+      toast.success("Visit request submitted! We'll confirm shortly.");
+      setScheduleForm({ name: '', phone: '', date: '', time: '' });
       setActionMode(null);
-      setReservationResult(null);
+    } catch (e: any) {
+      toast.error(e.message);
+    }
+  };
+
+  const handleVirtualTour = async () => {
+    if (!virtualForm.name || !virtualForm.phone || !virtualForm.slot) {
+      toast.error('Please provide name, phone, and preferred slot.');
+      return;
+    }
+    try {
+      await createVisitRequest.mutateAsync({
+        property_id: property.id,
+        name: virtualForm.name,
+        phone: virtualForm.phone,
+        visit_type: 'virtual',
+        requested_date: virtualForm.slot,
+      });
+      toast.success('Virtual tour booked! Check WhatsApp for the link.');
+      setVirtualForm({ name: '', phone: '', slot: '' });
+      setActionMode(null);
     } catch (e: any) {
       toast.error(e.message);
     }
@@ -309,12 +413,48 @@ export default function PropertyDetail() {
                             <div className="w-full h-full flex items-center justify-center"><Bed size={24} className="text-muted-foreground/20" /></div>
                           )}
                         </div>
-                        <div className="p-3">
-                          <h3 className="font-medium text-sm text-foreground line-clamp-1">{sp.name}</h3>
-                          <p className="text-[11px] text-muted-foreground mb-1">{sp.area}</p>
-                          <div className="flex justify-between items-baseline">
-                            <span className="font-semibold text-sm">From {getSimRent(sp)}</span>
-                            <span className="text-[10px] text-success">{getSimBeds(sp)} beds free</span>
+                        <div className="p-4 flex flex-col flex-1">
+                          <h3 className="font-bold text-base text-foreground line-clamp-1 mb-1">{sp.name}</h3>
+                          <p className="text-xs text-muted-foreground mb-4 flex items-center gap-1.5"><MapPin size={12} /> {sp.area}</p>
+                          <div className="flex-1" />
+
+                          {sp.rooms && sp.rooms.length > 0 && (
+                            <div className="mb-3 space-y-1.5">
+                              <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Available Rooms</p>
+                              <div className="flex flex-col gap-1">
+                                {sp.rooms.slice(0, 2).map((room: any) => {
+                                  const availableBeds = (room.beds || []).filter((b: any) => b.status === "vacant").length;
+                                  return (
+                                    <div key={room.id} className="flex items-center justify-between text-[11px] bg-muted/40 rounded-lg p-1.5 border border-border/40">
+                                      <div className="flex flex-col">
+                                        <span className="font-semibold text-foreground">{room.room_type || 'Private'}</span>
+                                        {availableBeds > 0 ? (
+                                          <span className="text-[9px] text-success font-medium">{availableBeds} beds left</span>
+                                        ) : (
+                                          <span className="text-[9px] text-destructive font-medium">Sold out</span>
+                                        )}
+                                      </div>
+                                      <div className="text-right">
+                                        <span className="font-bold text-foreground">₹{(room.rent_per_bed || room.expected_rent || 0).toLocaleString()}</span>
+                                      </div>
+                                    </div>
+                                  );
+                                })}
+                                {sp.rooms.length > 2 && (
+                                  <div className="text-[9px] text-center text-muted-foreground py-0.5 font-medium bg-muted/20 rounded-lg border border-border/20 mt-0.5">
+                                    + {sp.rooms.length - 2} more options
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          )}
+
+                          <div className="flex items-baseline justify-between pt-3 border-t border-border/50">
+                            <div>
+                              <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">Starts at </span>
+                              <span className="text-base font-bold text-foreground">{getSimRent(sp)}</span>
+                            </div>
+                            <span className="text-xs font-semibold text-success bg-success/10 px-2 py-1 rounded-md">{getSimBeds(sp)} beds left</span>
                           </div>
                         </div>
                       </div>
@@ -440,11 +580,11 @@ export default function PropertyDetail() {
         <DialogContent className="sm:max-w-md">
           <DialogHeader><DialogTitle>Schedule a Visit</DialogTitle></DialogHeader>
           <div className="space-y-4">
-            <div><Label>Your Name</Label><Input placeholder="Full name" /></div>
-            <div><Label>Phone</Label><Input placeholder="+91..." /></div>
-            <div><Label>Preferred Date</Label><Input type="date" /></div>
+            <div><Label>Your Name *</Label><Input placeholder="Full name" value={scheduleForm.name} onChange={e => setScheduleForm(f => ({ ...f, name: e.target.value }))} /></div>
+            <div><Label>Phone *</Label><Input placeholder="+91..." value={scheduleForm.phone} onChange={e => setScheduleForm(f => ({ ...f, phone: e.target.value }))} /></div>
+            <div><Label>Preferred Date *</Label><Input type="date" value={scheduleForm.date} onChange={e => setScheduleForm(f => ({ ...f, date: e.target.value }))} /></div>
             <div><Label>Preferred Time</Label>
-              <Select>
+              <Select value={scheduleForm.time} onValueChange={v => setScheduleForm(f => ({ ...f, time: v }))}>
                 <SelectTrigger><SelectValue placeholder="Select time slot" /></SelectTrigger>
                 <SelectContent>
                   {['10:00 AM', '12:00 PM', '2:00 PM', '4:00 PM', '6:00 PM'].map(t => (
@@ -453,8 +593,8 @@ export default function PropertyDetail() {
                 </SelectContent>
               </Select>
             </div>
-            <Button className="w-full bg-accent hover:bg-accent/90 text-accent-foreground" onClick={() => { toast.success("Visit request submitted! We'll confirm shortly."); setActionMode(null); }}>
-              Request Visit
+            <Button disabled={createVisitRequest.isPending} className="w-full bg-accent hover:bg-accent/90 text-accent-foreground" onClick={handleScheduleVisit}>
+              {createVisitRequest.isPending ? 'Submitting...' : 'Request Visit'}
             </Button>
           </div>
         </DialogContent>
@@ -466,10 +606,10 @@ export default function PropertyDetail() {
           <DialogHeader><DialogTitle>Book a Virtual Tour</DialogTitle></DialogHeader>
           <div className="space-y-4">
             <p className="text-sm text-muted-foreground">See the property from the comfort of your home. A Gharpayy agent will give you a live video walkthrough.</p>
-            <div><Label>Your Name</Label><Input placeholder="Full name" /></div>
-            <div><Label>Phone / WhatsApp</Label><Input placeholder="+91..." /></div>
-            <div><Label>Preferred Slot</Label>
-              <Select>
+            <div><Label>Your Name *</Label><Input placeholder="Full name" value={virtualForm.name} onChange={e => setVirtualForm(f => ({ ...f, name: e.target.value }))} /></div>
+            <div><Label>Phone / WhatsApp *</Label><Input placeholder="+91..." value={virtualForm.phone} onChange={e => setVirtualForm(f => ({ ...f, phone: e.target.value }))} /></div>
+            <div><Label>Preferred Slot *</Label>
+              <Select value={virtualForm.slot} onValueChange={v => setVirtualForm(f => ({ ...f, slot: v }))}>
                 <SelectTrigger><SelectValue placeholder="Select time" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="today_now">Today - As soon as possible</SelectItem>
@@ -479,8 +619,8 @@ export default function PropertyDetail() {
                 </SelectContent>
               </Select>
             </div>
-            <Button className="w-full bg-accent hover:bg-accent/90 text-accent-foreground" onClick={() => { toast.success('Virtual tour booked! Check WhatsApp for the link.'); setActionMode(null); }}>
-              Book Virtual Tour
+            <Button disabled={createVisitRequest.isPending} className="w-full bg-accent hover:bg-accent/90 text-accent-foreground" onClick={handleVirtualTour}>
+              {createVisitRequest.isPending ? 'Booking...' : 'Book Virtual Tour'}
             </Button>
           </div>
         </DialogContent>

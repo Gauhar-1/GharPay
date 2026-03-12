@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,100..900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700;800&family=Playfair+Display:ital,wght@0,400;0,600;0,700;0,800;0,900;1,400;1,600;1,700;1,800&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -6,106 +6,62 @@
 
 @layer base {
   :root {
-    /* Ultra-clean neutral base — Linear/Stripe inspired */
-    --background: 0 0% 99%;
-    --foreground: 220 14% 10%;
+    /* THE EXECUTIVE DOSSIER THEME 
+      Defaulting to Dark Mode for the high-stakes, intelligence-terminal aesthetic.
+    */
+    --background: 240 5% 4%;     /* #0A0A0C - Midnight Ink */
+    --foreground: 0 0% 90%;      /* #E5E5E5 - Off-White Paper */
 
-    --card: 0 0% 100%;
-    --card-foreground: 220 14% 10%;
+    --card: 240 6% 6%;           /* #0E0E11 - Deep Charcoal */
+    --card-foreground: 0 0% 90%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 220 14% 10%;
+    --popover: 240 6% 6%;
+    --popover-foreground: 0 0% 90%;
 
-    --primary: 220 14% 10%;
-    --primary-foreground: 0 0% 100%;
+    --primary: 46 65% 52%;       /* #D4AF37 - Sovereign Gold */
+    --primary-foreground: 0 0% 0%;
 
-    --secondary: 220 14% 96.5%;
-    --secondary-foreground: 220 14% 30%;
+    --secondary: 0 0% 12%;       /* Dark surface for subtle contrast */
+    --secondary-foreground: 0 0% 70%;
 
-    --muted: 220 10% 95%;
-    --muted-foreground: 220 8% 46%;
+    --muted: 0 0% 10%;
+    --muted-foreground: 0 0% 50%;
 
-    --accent: 25 95% 53%;
-    --accent-foreground: 0 0% 100%;
+    --accent: 46 65% 52%;        /* #D4AF37 - Sovereign Gold */
+    --accent-foreground: 0 0% 0%;
 
-    --destructive: 0 72% 51%;
+    --destructive: 351 63% 40%;  /* #A62639 - Deep Crimson */
     --destructive-foreground: 0 0% 100%;
 
-    /* 3 state colors — the only colors that matter */
-    --success: 152 60% 40%;
+    /* Tactical States */
+    --success: 150 80% 40%;      /* Emerald */
     --success-foreground: 0 0% 100%;
 
-    --warning: 38 92% 50%;
-    --warning-foreground: 0 0% 100%;
+    --warning: 46 65% 52%;       /* Gold acts as warning */
+    --warning-foreground: 0 0% 0%;
 
-    --info: 217 80% 56%;
+    --info: 200 90% 40%;         /* Intelligence Sky */
     --info-foreground: 0 0% 100%;
 
-    --border: 220 10% 93%;
-    --input: 220 10% 93%;
-    --ring: 220 14% 10%;
+    --border: 0 0% 15%;          /* Crisp, faint structural lines */
+    --input: 0 0% 15%;
+    --ring: 46 65% 52%;
 
-    --radius: 0.75rem;
+    /* Brutalist / Sharp corners for the forensic look */
+    --radius: 0.25rem;
 
-    /* Sidebar — refined dark */
-    --sidebar-bg: 220 16% 7%;
-    --sidebar-fg: 220 10% 50%;
-    --sidebar-active: 25 95% 53%;
-    --sidebar-active-fg: 0 0% 100%;
-    --sidebar-hover: 220 14% 11%;
-    --sidebar-border: 220 14% 12%;
+    /* The Intelligence Sidebar */
+    --sidebar-bg: 240 6% 4%;
+    --sidebar-fg: 0 0% 50%;
+    --sidebar-active: 46 65% 52%;
+    --sidebar-active-fg: 0 0% 0%;
+    --sidebar-hover: 0 0% 10%;
+    --sidebar-border: 0 0% 12%;
 
-    --sidebar-background: 220 16% 7%;
-    --sidebar-foreground: 220 10% 50%;
-    --sidebar-primary: 25 95% 53%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 220 14% 11%;
-    --sidebar-accent-foreground: 220 10% 75%;
-    --sidebar-border: 220 14% 12%;
-    --sidebar-ring: 25 95% 53%;
-
-    /* Pipeline colors — desaturated, neutral */
-    --pipeline-new: 217 50% 58%;
-    --pipeline-contacted: 262 35% 55%;
-    --pipeline-requirement: 38 50% 50%;
-    --pipeline-suggested: 25 50% 50%;
-    --pipeline-visit-scheduled: 173 40% 42%;
-    --pipeline-visit-completed: 152 40% 42%;
-    --pipeline-booked: 152 50% 35%;
-    --pipeline-lost: 0 40% 50%;
-
-    --font-display: 'Inter', sans-serif;
+    /* Typography Overrides */
+    --font-display: 'Playfair Display', serif;
     --font-body: 'Inter', sans-serif;
-  }
-
-  .dark {
-    --background: 220 16% 5%;
-    --foreground: 220 10% 92%;
-    --card: 220 16% 7.5%;
-    --card-foreground: 220 10% 92%;
-    --popover: 220 16% 7.5%;
-    --popover-foreground: 220 10% 92%;
-    --primary: 0 0% 100%;
-    --primary-foreground: 220 16% 7%;
-    --secondary: 220 14% 11%;
-    --secondary-foreground: 220 10% 75%;
-    --muted: 220 14% 12%;
-    --muted-foreground: 220 8% 46%;
-    --accent: 25 95% 53%;
-    --accent-foreground: 0 0% 100%;
-    --destructive: 0 55% 45%;
-    --destructive-foreground: 0 0% 100%;
-    --border: 220 14% 12%;
-    --input: 220 14% 12%;
-    --ring: 0 0% 100%;
-    --sidebar-background: 220 16% 4%;
-    --sidebar-foreground: 220 10% 48%;
-    --sidebar-primary: 25 95% 53%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 220 14% 8%;
-    --sidebar-accent-foreground: 220 10% 80%;
-    --sidebar-border: 220 14% 9%;
-    --sidebar-ring: 25 95% 53%;
+    --font-mono: 'JetBrains Mono', monospace;
   }
 }
 
@@ -114,78 +70,131 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground antialiased;
+    @apply bg-background text-foreground antialiased selection:bg-accent/30 selection:text-accent-foreground;
     font-family: var(--font-body);
     font-feature-settings: 'cv11', 'ss01';
-    font-optical-sizing: auto;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    letter-spacing: -0.011em;
   }
+  
+  /* Authoritative Headers */
   h1, h2, h3, h4, h5, h6 {
     font-family: var(--font-display);
-    letter-spacing: -0.025em;
-    font-weight: 600;
+    letter-spacing: -0.02em;
+  }
+
+  /* Monospace for numbers and strict data */
+  code, kbd, samp, pre, .font-mono {
+    font-family: var(--font-mono);
   }
 }
 
 @layer components {
+  /* Themed "Intelligence Cells" replacing standard cards */
   .kpi-card {
-    @apply rounded-xl bg-card p-5 border border-border transition-all duration-200;
+    @apply bg-[#0A0A0C] border-t-2 border-b border-x border-x-white/5 border-b-white/5 border-t-white/10 p-6 relative overflow-hidden transition-all duration-500 hover:border-t-accent/50;
+    box-shadow: 0 10px 40px -10px rgba(0,0,0,0.5);
   }
-  .kpi-card:hover {
-    box-shadow: 0 1px 3px 0 hsl(var(--foreground) / 0.04), 0 1px 2px -1px hsl(var(--foreground) / 0.04);
+  
+  /* Adds the subtle noise texture on hover to mimic classified paper/microfilm */
+  .kpi-card::before {
+    content: '';
+    @apply absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-0 transition-opacity duration-500 pointer-events-none;
+  }
+  .kpi-card:hover::before {
+    @apply opacity-10;
   }
 
+  /* The structured Kanban column */
   .pipeline-column {
-    @apply flex flex-col gap-2 min-w-[272px] rounded-xl p-2.5;
+    @apply flex flex-col gap-3 min-w-[320px] bg-[#0A0A0C]/80 backdrop-blur-xl border border-white/10 rounded-sm p-3;
   }
 
+  /* The Dossier Card */
   .pipeline-card {
-    @apply bg-card rounded-lg p-3.5 border border-border cursor-pointer transition-all duration-150;
+    @apply bg-[#121215] border border-white/10 p-4 rounded-sm cursor-grab transition-all duration-300;
   }
   .pipeline-card:hover {
-    @apply border-muted-foreground/15;
-    box-shadow: 0 1px 3px 0 hsl(var(--foreground) / 0.04);
+    @apply border-accent/50 shadow-[0_0_15px_rgba(212,175,55,0.1)];
   }
 
+  /* Sidebar Navigation - Sharp & Professional */
   .sidebar-link {
-    @apply flex items-center gap-2.5 px-2.5 py-[7px] rounded-lg text-[13px] font-medium transition-all duration-150;
+    @apply flex items-center gap-3 px-4 py-2.5 rounded-none text-xs font-mono uppercase tracking-widest transition-all duration-300 border-l-2 border-transparent;
     color: hsl(var(--sidebar-fg));
   }
   .sidebar-link:hover {
     background: hsl(var(--sidebar-hover));
-    color: hsl(var(--sidebar-active-fg));
+    color: hsl(var(--foreground));
+    @apply border-white/20;
   }
   .sidebar-link.active {
-    background: hsl(var(--sidebar-active));
-    color: hsl(var(--sidebar-active-fg));
-    box-shadow: 0 1px 4px hsl(var(--sidebar-active) / 0.25);
+    background: linear-gradient(90deg, hsl(var(--sidebar-active) / 0.1) 0%, transparent 100%);
+    color: hsl(var(--sidebar-active));
+    @apply border-accent shadow-[inset_2px_0_10px_rgba(212,175,55,0.05)];
   }
 
+  /* Strict, Military-style Badges */
   .badge-pipeline {
-    @apply inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-medium;
+    @apply inline-flex items-center px-2 py-1 rounded-none text-[9px] font-mono font-bold uppercase tracking-[0.2em] border border-current;
   }
 
+  /* Typography Utilities */
   .stat-up { @apply text-success; }
   .stat-down { @apply text-destructive; }
 
+  /* Advanced Glassmorphism */
   .glass {
-    backdrop-filter: blur(16px) saturate(180%);
-    -webkit-backdrop-filter: blur(16px) saturate(180%);
+    backdrop-filter: blur(24px) saturate(150%);
+    -webkit-backdrop-filter: blur(24px) saturate(150%);
+    background: linear-gradient(135deg, rgba(18,18,21,0.8) 0%, rgba(10,10,12,0.9) 100%);
+    border: 1px solid rgba(255,255,255,0.05);
   }
 
-  /* Status colors — only 3 states */
+  /* Core Status Themes - Adapted for deep dark backgrounds */
   .status-good { color: hsl(var(--success)); }
   .status-warn { color: hsl(var(--warning)); }
   .status-bad { color: hsl(var(--destructive)); }
-  .status-good-bg { background: hsl(var(--success) / 0.08); border-color: hsl(var(--success) / 0.15); }
-  .status-warn-bg { background: hsl(var(--warning) / 0.08); border-color: hsl(var(--warning) / 0.15); }
-  .status-bad-bg { background: hsl(var(--destructive) / 0.08); border-color: hsl(var(--destructive) / 0.15); }
+  
+  .status-good-bg { background: hsl(var(--success) / 0.1); border-color: hsl(var(--success) / 0.2); }
+  .status-warn-bg { background: hsl(var(--warning) / 0.1); border-color: hsl(var(--warning) / 0.2); }
+  .status-bad-bg { background: hsl(var(--destructive) / 0.1); border-color: hsl(var(--destructive) / 0.2); }
 }
 
-/* Scrollbar — invisible until hover */
-::-webkit-scrollbar { width: 3px; height: 3px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: hsl(var(--muted-foreground) / 0.1); border-radius: 2px; }
-::-webkit-scrollbar-thumb:hover { background: hsl(var(--muted-foreground) / 0.25); }
+@layer utilities {
+  /* Cinematic Vignette for backgrounds */
+  .bg-radial-vignette {
+    background: radial-gradient(circle at center, transparent 0%, rgba(5,5,5,0.8) 100%);
+  }
+
+  /* Brutalist cut-corner logo shape */
+  .clip-path-monolith {
+    clip-path: polygon(15% 0, 100% 0, 85% 100%, 0 100%);
+  }
+
+  /* Hides standard scrollbar while keeping functionality */
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}
+
+/* Tactical, ultra-thin scrollbar for tables and sidebars */
+.custom-scrollbar::-webkit-scrollbar { 
+  width: 4px; 
+  height: 4px; 
+}
+.custom-scrollbar::-webkit-scrollbar-track { 
+  background: rgba(0,0,0,0.2); 
+  border-left: 1px solid rgba(255,255,255,0.05);
+}
+.custom-scrollbar::-webkit-scrollbar-thumb { 
+  background: rgba(255,255,255,0.1); 
+  border-radius: 0px; 
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover { 
+  background: hsl(var(--accent) / 0.5); 
+}

@@ -627,6 +627,48 @@ export type Database = {
           },
         ]
       }
+      messages: {
+        Row: {
+          content: string
+          conversation_id: string
+          created_at: string
+          id: string
+          lead_id: string
+          sender_type: Database["public"]["Enums"]["sender_type_enum"]
+        }
+        Insert: {
+          content: string
+          conversation_id?: string
+          created_at?: string
+          id?: string
+          lead_id?: string
+          sender_type: Database["public"]["Enums"]["sender_type_enum"]
+        }
+        Update: {
+          content?: string
+          conversation_id?: string
+          created_at?: string
+          id?: string
+          lead_id?: string
+          sender_type?: Database["public"]["Enums"]["sender_type_enum"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "messages_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       message_templates: {
         Row: {
           body: string
@@ -722,6 +764,38 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: []
+      }
+      payment_transactions: {
+        Row: {
+          amount: number
+          gateway_transaction_id: string | null
+          id: string
+          reservation_id: string | null
+          status: string | null
+        }
+        Insert: {
+          amount: number
+          gateway_transaction_id?: string | null
+          id?: string
+          reservation_id?: string | null
+          status?: string | null
+        }
+        Update: {
+          amount?: number
+          gateway_transaction_id?: string | null
+          id?: string
+          reservation_id?: string | null
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_transactions_reservation_id_fkey"
+            columns: ["reservation_id"]
+            isOneToOne: false
+            referencedRelation: "reservations"
+            referencedColumns: ["id"]
+          }
+        ]
       }
       profiles: {
         Row: {
@@ -1365,6 +1439,7 @@ export type Database = {
       }
     }
     Enums: {
+      sender_type_enum: "lead" | "agent" | "bot"
       bed_status:
         | "vacant"
         | "occupied"
@@ -1529,6 +1604,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      sender_type_enum: ["lead", "agent", "bot"],
       bed_status: [
         "vacant",
         "occupied",

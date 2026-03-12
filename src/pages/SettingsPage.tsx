@@ -11,6 +11,7 @@ import { toast } from 'sonner';
 import { motion } from 'framer-motion';
 import { Plus, Trash2, UserCog, Building2, User, Save } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
+import { ImageUpload } from '@/components/ImageUpload';
 
 const SettingsPage = () => {
   const user = { id: 'admin', email: 'admin@gharpayy.com', user_metadata: { full_name: 'Admin' } };
@@ -131,7 +132,7 @@ function TeamTab({ agents, qc }: { agents: any[]; qc: any }) {
 }
 
 function PropertiesTab({ properties, qc }: { properties: any[]; qc: any }) {
-  const [form, setForm] = useState({ name: '', city: '', area: '', price_range: '', address: '' });
+  const [form, setForm] = useState({ name: '', city: '', area: '', price_range: '', address: '', photos: [] as string[] });
   const [adding, setAdding] = useState(false);
 
   const handleAdd = async () => {
@@ -144,10 +145,11 @@ function PropertiesTab({ properties, qc }: { properties: any[]; qc: any }) {
         area: form.area || null,
         price_range: form.price_range || null,
         address: form.address || null,
+        photos: form.photos.length > 0 ? form.photos : null
       });
       if (error) throw error;
       toast.success('Property added');
-      setForm({ name: '', city: '', area: '', price_range: '', address: '' });
+      setForm({ name: '', city: '', area: '', price_range: '', address: '', photos: [] });
       qc.invalidateQueries({ queryKey: ['properties'] });
     } catch (err: any) { toast.error(err.message); }
     finally { setAdding(false); }
@@ -181,7 +183,16 @@ function PropertiesTab({ properties, qc }: { properties: any[]; qc: any }) {
             <Input placeholder="₹50L - 80L" value={form.price_range} onChange={e => setForm(f => ({ ...f, price_range: e.target.value }))} className="text-xs" />
           </div>
         </div>
-        <Button size="sm" onClick={handleAdd} disabled={adding} className="mt-3 gap-1.5 text-xs">
+
+        <div className="mt-4">
+            <Label className="text-[10px] mb-1.5 block">Property Photos</Label>
+            <ImageUpload 
+                onUploadComplete={(urls) => setForm(f => ({ ...f, photos: urls }))} 
+                maxFiles={8} 
+            />
+        </div>
+
+        <Button size="sm" onClick={handleAdd} disabled={adding} className="mt-4 gap-1.5 text-xs w-full sm:w-auto">
           <Plus size={12} /> {adding ? 'Adding...' : 'Add Property'}
         </Button>
       </div>

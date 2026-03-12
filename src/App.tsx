@@ -2,9 +2,16 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation, useNavigationType, createRoutesFromChildren, matchRoutes } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
+import { GlobalErrorBoundary } from "@/components/GlobalErrorBoundary";
+import * as Sentry from "@sentry/react";
+import React, { useEffect } from "react";
+
+const SentryRoutes = Sentry.withSentryReactRouterV6Routing(Routes);
+
+const queryClient = new QueryClient();
 import Dashboard from "./pages/Dashboard";
 import Leads from "./pages/Leads";
 import Pipeline from "./pages/Pipeline";
@@ -28,8 +35,7 @@ import Auth from "./pages/Auth";
 import ResetPassword from "./pages/ResetPassword";
 import OwnerPortal from "./pages/OwnerPortal";
 import NotFound from "./pages/NotFound";
-
-const queryClient = new QueryClient();
+import Profile from "./pages/Profile";
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -37,38 +43,47 @@ const App = () => (
       <TooltipProvider>
         <Toaster />
         <Sonner />
-        <BrowserRouter>
-          <Routes>
-            {/* Public customer-facing routes */}
-            <Route path="/" element={<LandingPage />} />
-            <Route path="/explore" element={<Explore />} />
-            <Route path="/property/:propertyId" element={<PropertyDetail />} />
-            <Route path="/capture" element={<LeadCapture />} />
-            <Route path="/auth" element={<Auth />} />
-            <Route path="/reset-password" element={<ResetPassword />} />
+        <GlobalErrorBoundary>
+            <BrowserRouter>
+              <SentryRoutes>
+               <Route path="/" element={<LandingPage />} />
+                <Route path="/explore" element={<Explore />} />
+                <Route path="/property/:propertyId" element={<PropertyDetail />} />
+                <Route path="/capture" element={<LeadCapture />} />
+                <Route path="/auth" element={<Auth />} />
+                <Route path="/reset-password" element={<ResetPassword />} />
+                <Route 
+                       path="/profile" 
+                       element={
+                         <ProtectedRoute allowedRoles={['admin', 'manager', 'agent', 'owner']}>
+                           <Profile />
+                         </ProtectedRoute>
+                       } 
+                     />
 
-            {/* Owner-facing portal */}
-            <Route path="/owner-portal" element={<OwnerPortal />} />
+                <Route path="/owner-portal" element={<ProtectedRoute allowedRoles={['owner']}><OwnerPortal /></ProtectedRoute>} />
 
-            {/* Internal CRM routes */}
-            <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-            <Route path="/leads" element={<ProtectedRoute><Leads /></ProtectedRoute>} />
-            <Route path="/pipeline" element={<ProtectedRoute><Pipeline /></ProtectedRoute>} />
-            <Route path="/visits" element={<ProtectedRoute><Visits /></ProtectedRoute>} />
-            <Route path="/conversations" element={<ProtectedRoute><Conversations /></ProtectedRoute>} />
-            <Route path="/analytics" element={<ProtectedRoute><Analytics /></ProtectedRoute>} />
-            <Route path="/historical" element={<ProtectedRoute><Historical /></ProtectedRoute>} />
-            <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
-            <Route path="/owners" element={<ProtectedRoute><Owners /></ProtectedRoute>} />
-            <Route path="/inventory" element={<ProtectedRoute><Inventory /></ProtectedRoute>} />
-            <Route path="/effort" element={<ProtectedRoute><EffortDashboard /></ProtectedRoute>} />
-            <Route path="/availability" element={<ProtectedRoute><Availability /></ProtectedRoute>} />
-            <Route path="/matching" element={<ProtectedRoute><Matching /></ProtectedRoute>} />
-            <Route path="/bookings" element={<ProtectedRoute><Bookings /></ProtectedRoute>} />
-            <Route path="/zones" element={<ProtectedRoute><ZoneManagement /></ProtectedRoute>} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
+                <Route path="/dashboard" element={<ProtectedRoute allowedRoles={['admin', 'manager', 'agent']}><Dashboard /></ProtectedRoute>} />
+                <Route path="/leads" element={<ProtectedRoute allowedRoles={['admin', 'manager', 'agent']}><Leads /></ProtectedRoute>} />
+                <Route path="/pipeline" element={<ProtectedRoute allowedRoles={['admin', 'manager', 'agent']}><Pipeline /></ProtectedRoute>} />
+                <Route path="/visits" element={<ProtectedRoute allowedRoles={['admin', 'manager', 'agent']}><Visits /></ProtectedRoute>} />
+                <Route path="/conversations" element={<ProtectedRoute allowedRoles={['admin', 'manager', 'agent']}><Conversations /></ProtectedRoute>} />
+                <Route path="/analytics" element={<ProtectedRoute allowedRoles={['admin', 'manager', 'agent']}><Analytics /></ProtectedRoute>} />
+                <Route path="/historical" element={<ProtectedRoute allowedRoles={['admin', 'manager', 'agent']}><Historical /></ProtectedRoute>} />
+                <Route path="/owners" element={<ProtectedRoute allowedRoles={['admin', 'manager', 'agent']}><Owners /></ProtectedRoute>} />
+                <Route path="/effort" element={<ProtectedRoute allowedRoles={['admin', 'manager', 'agent']}><EffortDashboard /></ProtectedRoute>} />
+                <Route path="/availability" element={<ProtectedRoute allowedRoles={['admin', 'manager', 'agent']}><Availability /></ProtectedRoute>} />
+                <Route path="/matching" element={<ProtectedRoute allowedRoles={['admin', 'manager', 'agent']}><Matching /></ProtectedRoute>} />
+                <Route path="/bookings" element={<ProtectedRoute allowedRoles={['admin', 'manager', 'agent']}><Bookings /></ProtectedRoute>} />
+
+                <Route path="/settings" element={<ProtectedRoute allowedRoles={['admin', 'manager']}><SettingsPage /></ProtectedRoute>} />
+                <Route path="/inventory" element={<ProtectedRoute allowedRoles={['admin', 'manager']}><Inventory /></ProtectedRoute>} />
+                <Route path="/zones" element={<ProtectedRoute allowedRoles={['admin', 'manager']}><ZoneManagement /></ProtectedRoute>} />
+                
+                <Route path="*" element={<NotFound />} />
+              </SentryRoutes>
+            </BrowserRouter>
+        </GlobalErrorBoundary>
       </TooltipProvider>
     </AuthProvider>
   </QueryClientProvider>
