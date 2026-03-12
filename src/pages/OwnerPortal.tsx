@@ -156,7 +156,10 @@ export default function OwnerPortal() {
               Identity <strong>{user?.email}</strong> is not registered as an authorized asset partner in the mainframe.
             </p>
             <div className="flex flex-col gap-4">
-              <Button className="h-12 rounded-none bg-[#A62639] hover:bg-white text-white hover:text-black font-black uppercase tracking-widest text-[10px] transition-all" onClick={() => navigate('/')}>Return to Base</Button>
+              <Button className="h-12 rounded-none bg-[#D4AF37] hover:bg-white text-black font-black uppercase tracking-widest text-[10px] transition-all" onClick={() => navigate('/auth?mode=owner_signup')}>
+                <Building2 size={14} className="mr-2" /> Register as Property Owner
+              </Button>
+              <Button variant="ghost" className="h-12 rounded-none text-[10px] font-mono uppercase tracking-widest text-white/40 hover:text-white hover:bg-white/5" onClick={() => navigate('/')}>Return to Base</Button>
               <Button variant="ghost" className="h-12 rounded-none text-[10px] font-mono uppercase tracking-widest text-white/40 hover:text-white hover:bg-white/5" onClick={() => signOut()}>Purge Session</Button>
             </div>
           </div>

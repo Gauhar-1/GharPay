@@ -28,13 +28,24 @@ export default function ProtectedRoute({ children, allowedRoles }: ProtectedRout
   }
 
   // 3. Logged in, but does the route require specific roles?
-  if (allowedRoles && role && !allowedRoles.includes(role)) {
-    // If an owner tries to access the CRM, force them to the owner portal
-    if (role === 'owner') {
-      return <Navigate to="/owner-portal" replace />;
+  if (allowedRoles && allowedRoles.length > 0) {
+    // If role is null (no row in user_roles yet), deny access for restricted routes
+    // Exception: admin email bypass for initial setup
+    const isAdminEmail = user.email === 'admin@gharpayy.com' || user.user_metadata?.role === 'admin';
+    
+    if (!role && !isAdminEmail) {
+      // Role not yet assigned — could be a new owner signup, redirect to auth
+      return <Navigate to="/auth" state={{ from: location }} replace />;
     }
-    // If a standard agent tries to access admin settings, kick them to dashboard
-    return <Navigate to="/dashboard" replace />;
+
+    if (role && !allowedRoles.includes(role) && !isAdminEmail) {
+      // If an owner tries to access the CRM, force them to the owner portal
+      if (role === 'owner') {
+        return <Navigate to="/owner-portal" replace />;
+      }
+      // If a standard agent tries to access admin settings, kick them to dashboard
+      return <Navigate to="/dashboard" replace />;
+    }
   }
 
   // 4. User is authenticated and authorized! Render the page.

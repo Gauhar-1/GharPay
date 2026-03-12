@@ -4,15 +4,19 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
-import { Mail, Lock, User, Eye, EyeOff, Home, ShieldCheck, Zap } from 'lucide-react';
+import { Mail, Lock, User, Eye, EyeOff, Home, ShieldCheck, Zap, Building2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 
 const springTransition: any = { type: 'spring', bounce: 0, duration: 0.6, ease: [0.32, 0.72, 0, 1] };
 
 const Auth = () => {
-  const [mode, setMode] = useState<'login' | 'signup' | 'forgot'>('login');
+  const [searchParams] = useSearchParams();
+  const isOwnerSignup = searchParams.get('mode') === 'owner_signup';
+  
+  const [mode, setMode] = useState<'login' | 'signup' | 'forgot'>(isOwnerSignup ? 'signup' : 'login');
+  const [isOwner, setIsOwner] = useState(isOwnerSignup);
   
   // LOGIC FIX 1: Removed hardcoded demo credentials for production security
   const [email, setEmail] = useState('');
@@ -69,7 +73,11 @@ const Auth = () => {
       email,
       password,
       options: {
-        data: { full_name: fullName },
+        data: { 
+          full_name: fullName,
+          // If signing up as owner, set role in metadata to trigger DB trigger
+          ...(isOwner ? { role: 'owner' } : {})
+        },
         emailRedirectTo: window.location.origin,
       },
     });
