@@ -61,7 +61,7 @@ const App = () => (
                        } 
                      />
 
-                <Route path="/owner-portal" element={<ProtectedRoute allowedRoles={['owner']}><OwnerPortal /></ProtectedRoute>} />
+                <Route path="/owner-portal" element={<ProtectedRoute allowedRoles={['owner','admin']}><OwnerPortal /></ProtectedRoute>} />
 
                 <Route path="/dashboard" element={<ProtectedRoute allowedRoles={['admin', 'manager', 'agent']}><Dashboard /></ProtectedRoute>} />
                 <Route path="/leads" element={<ProtectedRoute allowedRoles={['admin', 'manager', 'agent']}><Leads /></ProtectedRoute>} />
