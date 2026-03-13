@@ -40,9 +40,7 @@ To thoroughly evaluate the Role-Based Access Control (RBAC) and routing logic, p
 
 | Role | Email | Password | Landing Portal |
 | :--- | :--- | :--- | :--- |
-| **System Admin** | `admin@gharpayy.com` | `admin123` | `/dashboard`  |
-| **Property Owner** | `owner@gharpayy.com` | `owner123` | `/owner-portal`  |
-| **Public Customer** | `customer@example.com` | `customer123` | `/`  |
+| **System Admin** | `taujiludo@gmail.com` | `tauji123` | `/dashboard`  |
 
 *(Note to reviewers: Ensure you test the intelligent routing by logging in via the `/auth` gateway with different accounts to see the RBAC UI restrictions in action.)*
 
