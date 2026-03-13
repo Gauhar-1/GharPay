@@ -90,7 +90,7 @@ export default function PropertyDetail() {
     }
     try {
       const result = await createReservation.mutateAsync({
-        property_id: property.id,
+        property_id: property._id,
         bed_id: selectedBed.id,
         room_id: selectedRoom.id,
         customer_name: customerForm.name,
@@ -176,7 +176,7 @@ export default function PropertyDetail() {
     }
     try {
       await createVisitRequest.mutateAsync({
-        property_id: property.id,
+        property_id: property._id,
         name: scheduleForm.name,
         phone: scheduleForm.phone,
         visit_type: 'physical',
@@ -197,7 +197,7 @@ export default function PropertyDetail() {
     }
     try {
       await createVisitRequest.mutateAsync({
-        property_id: property.id,
+        property_id: property._id,
         name: virtualForm.name,
         phone: virtualForm.phone,
         visit_type: 'virtual',

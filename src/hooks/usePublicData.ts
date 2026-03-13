@@ -67,7 +67,7 @@ export function usePublicProperty(propertyId: string | undefined) {
     queryKey: ['public-property', propertyId],
     enabled: !!propertyId,
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from('properties')
         .select('*, owners:owner_id(name, phone), rooms(*, beds(*))')
         .eq('id', propertyId!)
@@ -91,7 +91,7 @@ export function useSimilarProperties(area?: string | null, city?: string | null,
 
       if (area) q = q.ilike('area', `%${area}%`);
       else if (city) q = q.ilike('city', `%${city}%`);
-      if (excludeId) q = q.neq('id', excludeId);
+      if (excludeId) q = q.neq('id', excludeId as any);
 
       const { data, error } = await q;
       if (error) throw error;
@@ -177,6 +177,9 @@ export function useConfirmReservation() {
       if ((data as any)?.error) throw new Error((data as any).error);
       return data;
     },
+    onSuccess: () => {
+      window.location.href = '/tenant-portal';
+    }
   });
 }
 export function useCreateVisitRequest() {

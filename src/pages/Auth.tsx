@@ -8,6 +8,7 @@ import { Mail, Lock, User, Eye, EyeOff, Home, ShieldCheck, Zap, Building2 } from
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { useUserRole } from '@/hooks/useUserRole';
 
 const springTransition: any = { type: 'spring', bounce: 0, duration: 0.6, ease: [0.32, 0.72, 0, 1] };
 
@@ -27,29 +28,31 @@ const Auth = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { data: dbRole, isLoading: roleLoading } = useUserRole();
 
   useEffect(() => {
-  if (user) {
-    // Extract role from metadata (set during signup or via DB trigger)
-    const role = user.user_metadata?.role || 'customer';
-    const email = user.email;
+    if (user && !roleLoading) {
+      const role = dbRole || user.user_metadata?.role || 'customer';
+      const email = user.email;
 
-    // Hard-coded admin check for the demo account, or metadata check for scalability
-    const isAdmin = email === 'admin@gharpayy.com' || role === 'admin' || role === 'manager';
-    const isAgent = role === 'agent';
-    const isOwnerRole = role === 'owner';
+      const isAdmin = email === 'admin@gharpayy.com' || email === 'ghostishere444@gmail.com' || role === 'admin' || role === 'manager';
+      const isAgent = role === 'agent';
+      const isOwnerRole = role === 'owner';
+      const isTenant = role === 'tenant' || role === 'customer'; // Customers go to tenant-portal to check for active bookings
 
-    if (isAdmin) {
-      navigate('/dashboard');
-    } else if (isAgent) {
-      navigate('/leads');
-    } else if (isOwnerRole) {
-      navigate('/owner-portal');
-    } else {
-      navigate('/');
+      if (isAdmin) {
+        navigate('/dashboard');
+      } else if (isAgent) {
+        navigate('/leads');
+      } else if (isOwnerRole) {
+        navigate('/owner-portal');
+      } else if (isTenant) {
+        navigate('/tenant-portal'); // Route directly to the new Tenant Hub
+      } else {
+        navigate('/');
+      }
     }
-  }
-}, [user, navigate]);
+  }, [user, dbRole, roleLoading, navigate]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();

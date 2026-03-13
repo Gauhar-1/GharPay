@@ -36,6 +36,7 @@ import ResetPassword from "./pages/ResetPassword";
 import OwnerPortal from "./pages/OwnerPortal";
 import NotFound from "./pages/NotFound";
 import Profile from "./pages/Profile";
+import TenantPortal from "./pages/TenantPortal";
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -53,15 +54,25 @@ const App = () => (
                 <Route path="/auth" element={<Auth />} />
                 <Route path="/reset-password" element={<ResetPassword />} />
                 <Route 
-                       path="/profile" 
-                       element={
-                         <ProtectedRoute allowedRoles={['admin', 'manager', 'agent', 'owner']}>
-                           <Profile />
-                         </ProtectedRoute>
-                       } 
-                     />
+                  path="/profile" 
+                  element={
+                    <ProtectedRoute allowedRoles={['admin', 'manager', 'agent', 'owner', 'tenant', 'customer']}>
+                      <Profile />
+                    </ProtectedRoute>
+                  } 
+                />
+
 
                 <Route path="/owner-portal" element={<ProtectedRoute allowedRoles={['owner','admin']}><OwnerPortal /></ProtectedRoute>} />
+
+                <Route 
+                  path="/tenant-portal" 
+                  element={
+                    <ProtectedRoute allowedRoles={['tenant', 'customer', 'admin']}>
+                      <TenantPortal />
+                    </ProtectedRoute>
+                  } 
+    />
 
                 <Route path="/dashboard" element={<ProtectedRoute allowedRoles={['admin', 'manager', 'agent']}><Dashboard /></ProtectedRoute>} />
                 <Route path="/leads" element={<ProtectedRoute allowedRoles={['admin', 'manager', 'agent']}><Leads /></ProtectedRoute>} />
