@@ -156,7 +156,7 @@ function PropertiesTab({ properties, qc }: { properties: any[]; qc: any }) {
   };
 
   const handleDelete = async (id: string) => {
-    const { error } = await supabase.from('properties').delete().eq('id', id);
+    const { error } = await supabase.from('properties').delete().eq('_id', id);
     if (error) toast.error(error.message);
     else { toast.success('Property removed'); qc.invalidateQueries({ queryKey: ['properties'] }); }
   };

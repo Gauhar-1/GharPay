@@ -1,5 +1,5 @@
 export interface Lead {
-  id: string;
+  _id: string;
   name: string;
   phone: string;
   email?: string;
@@ -33,7 +33,7 @@ export type PipelineStage =
 export type VisitOutcome = 'booked' | 'considering' | 'not_interested';
 
 export interface Agent {
-  id: string;
+  _id: string;
   name: string;
   avatar?: string;
   activeLeads: number;
@@ -44,7 +44,7 @@ export interface Agent {
 }
 
 export interface Visit {
-  id: string;
+  _id: string;
   leadId: string;
   leadName: string;
   property: string;

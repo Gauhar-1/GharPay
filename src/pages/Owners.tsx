@@ -35,9 +35,9 @@ const Owners = () => {
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.name.trim() || !form.phone.trim() || !form.email.trim()) { 
-      toast.error('Name, Phone, and Email are required to generate access.'); 
-      return; 
+    if (!form.name.trim() || !form.phone.trim() || !form.email.trim()) {
+      toast.error('Name, Phone, and Email are required to generate access.');
+      return;
     }
     try {
       const { error } = await supabase.rpc('admin_create_owner' as any, {
@@ -54,7 +54,7 @@ const Owners = () => {
       setForm({ name: '', phone: '', email: '', company_name: '', notes: '' });
       toast.success('Entity registered. Portal access granted.', {
         description: `Default Password: GharpayyOwner2026!`,
-        duration: 10000, 
+        duration: 10000,
       });
       if (refetch) refetch(); // Refresh list
     } catch (err: any) {
@@ -71,9 +71,9 @@ const Owners = () => {
     try {
       // Call secure RPC to wipe the auth account and cascade delete
       const { error } = await supabase.rpc('admin_delete_owner' as any, { target_user_id: userId });
-      
+
       if (error) throw error;
-      
+
       toast.success(`${ownerName} has been redacted from the registry.`);
       if (refetch) refetch(); // Refresh list
     } catch (err: any) {
@@ -86,16 +86,16 @@ const Owners = () => {
       <div className="fixed inset-0 pointer-events-none opacity-[0.04] z-[-1] bg-[url('https://www.transparenttextures.com/patterns/dark-matter.png')]" />
 
       <div className="max-w-[1600px] mx-auto space-y-12">
-        
+
         {/* Command Strip */}
         <div className="flex flex-col sm:flex-row items-center justify-between gap-6 bg-[#121215] border border-white/10 p-4">
           <div className="relative w-full sm:w-96 flex items-center bg-[#0A0A0C] border border-white/10 focus-within:border-[#D4AF37] transition-colors">
             <Search size={16} className="absolute left-4 text-white/30" />
-            <input 
-              placeholder="QUERY ENTITY NAME OR CONTACT..." 
-              value={search} 
-              onChange={e => setSearch(e.target.value)} 
-              className="w-full bg-transparent h-12 pl-12 pr-4 text-[11px] font-mono tracking-widest text-white placeholder:text-white/20 outline-none" 
+            <input
+              placeholder="QUERY ENTITY NAME OR CONTACT..."
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              className="w-full bg-transparent h-12 pl-12 pr-4 text-[11px] font-mono tracking-widest text-white placeholder:text-white/20 outline-none"
             />
           </div>
 
@@ -155,16 +155,16 @@ const Owners = () => {
           <motion.div variants={staggerContainer} initial="hidden" animate="show" className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             <AnimatePresence>
               {filtered.map((owner, idx) => {
-                const ownerProps = getOwnerProperties(owner.id);
+                const ownerProps = getOwnerProperties(owner._id);
                 return (
-                  <motion.div 
-                    key={owner.id} 
+                  <motion.div
+                    key={owner._id}
                     variants={fadeUp}
                     layout
                     className="group relative bg-[#0A0A0C] border border-white/10 p-8 transition-all duration-500 hover:border-[#D4AF37] overflow-hidden cursor-pointer"
                   >
                     <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-0 group-hover:opacity-10 transition-opacity pointer-events-none" />
-                    
+
                     <div className="flex items-start justify-between mb-8 relative z-10">
                       <div>
                         <Badge variant="outline" className={`rounded-none border px-2 py-0.5 text-[8px] font-black tracking-[0.2em] uppercase mb-3 ${owner.is_active ? 'border-[#D4AF37] text-[#D4AF37] bg-[#D4AF37]/5' : 'border-white/20 text-white/40'}`}>
@@ -175,12 +175,12 @@ const Owners = () => {
                           {owner.company_name || 'Independent Agent'}
                         </p>
                       </div>
-                      
+
                       {/* NEW: DELETE BUTTON */}
-                      <button 
+                      <button
                         onClick={(e) => {
                           e.stopPropagation();
-                          handleDelete(owner.id, owner.name, owner.user_id);
+                          handleDelete(owner._id, owner.name, owner.user_id);
                         }}
                         className="opacity-0 group-hover:opacity-100 p-2 text-white/30 hover:text-[#A62639] hover:bg-[#A62639]/10 transition-all z-20"
                         title="Delete Owner"
@@ -191,12 +191,12 @@ const Owners = () => {
 
                     <div className="space-y-4 mb-8 relative z-10">
                       <div className="flex items-center gap-3 text-[11px] font-mono text-white/60">
-                        <Phone size={12} className="text-[#A62639]" /> 
+                        <Phone size={12} className="text-[#A62639]" />
                         <span className="tracking-widest">{owner.phone}</span>
                       </div>
                       {owner.email && (
                         <div className="flex items-center gap-3 text-[11px] font-mono text-white/60">
-                          <Mail size={12} className="text-[#A62639]" /> 
+                          <Mail size={12} className="text-[#A62639]" />
                           <span className="truncate tracking-wider">{owner.email}</span>
                         </div>
                       )}
