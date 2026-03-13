@@ -28,14 +28,28 @@ const Auth = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
 
-  // LOGIC FIX 2: Intelligent role-based redirection if already logged in
   useEffect(() => {
-    if (user) {
-      const isAdmin = user.email === 'admin@gharpayy.com' || user.user_metadata?.role === 'admin';
-      // Automatically route users based on their role
-      navigate(isAdmin ? '/dashboard' : '/');
+  if (user) {
+    // Extract role from metadata (set during signup or via DB trigger)
+    const role = user.user_metadata?.role || 'customer';
+    const email = user.email;
+
+    // Hard-coded admin check for the demo account, or metadata check for scalability
+    const isAdmin = email === 'admin@gharpayy.com' || role === 'admin' || role === 'manager';
+    const isAgent = role === 'agent';
+    const isOwnerRole = role === 'owner';
+
+    if (isAdmin) {
+      navigate('/dashboard');
+    } else if (isAgent) {
+      navigate('/leads');
+    } else if (isOwnerRole) {
+      navigate('/owner-portal');
+    } else {
+      navigate('/');
     }
-  }, [user, navigate]);
+  }
+}, [user, navigate]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
