@@ -31,7 +31,10 @@ export default function ProtectedRoute({ children, allowedRoles }: ProtectedRout
   if (allowedRoles && allowedRoles.length > 0) {
     // If role is null (no row in user_roles yet), deny access for restricted routes
     // Exception: admin email bypass for initial setup
-    const isAdminEmail = user.email === 'admin@gharpayy.com' || user.user_metadata?.role === 'admin';
+    const isAdminEmail = 
+  user.email === 'admin@gharpayy.com' || 
+  user.email === 'mdg_ug_22@mech.nits.ac.in' || 
+  user.user_metadata?.role === 'admin';
     
     if (!role && !isAdminEmail) {
       // Role not yet assigned — could be a new owner signup, redirect to auth
