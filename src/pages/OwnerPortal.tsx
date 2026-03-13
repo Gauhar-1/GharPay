@@ -86,7 +86,7 @@ export default function OwnerPortal() {
   const navigate = useNavigate();
   const { user, loading: authLoading, signOut } = useAuth();
   const { data: owner, isLoading: ownerLoading } = useOwnerByUser(user?.id);
-  const { data: properties } = useOwnerProperties(owner?.id);
+  const { data: properties } = useOwnerProperties(owner?._id);
   const submitAsset = useSubmitAsset();
 
   const [selectedProperty, setSelectedProperty] = useState<string>('all');
