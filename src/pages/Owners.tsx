@@ -70,7 +70,7 @@ const Owners = () => {
 
     try {
       // Call secure RPC to wipe the auth account and cascade delete
-      const { error } = await supabase.rpc('admin_delete_owner' as any, { target_user_id: userId });
+      const { error } = await supabase.rpc('admin_delete_owner' as any, { target_user_id: ownerId });
 
       if (error) throw error;
 
